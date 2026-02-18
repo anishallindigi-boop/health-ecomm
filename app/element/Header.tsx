@@ -5,10 +5,8 @@ const navLinks = ["HOME", "ABOUT US", "SHOP NOW", "OUR BLOGS", "CONTACT US"];
 const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="container flex items-center justify-between h-16">
-        <h1 className="font-heading text-2xl font-bold text-gold-gradient">
-          बाबा जी की बूटी
-        </h1>
+      <div className="container flex items-center justify-between h-26">
+       <img src='/logo.jpeg' className="h-20"/>
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <a

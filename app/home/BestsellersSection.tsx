@@ -16,7 +16,7 @@ const BestsellersSection = () => {
           OUR BESTSELLERS
         </p>
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-center text-foreground mb-10">
-          शरीर हो या मन की थकान, बाबा जी की बूटी सबका समाधान!
+          शरीर हो या मन की थकान, मुल्तानी पंसारी सबका समाधान!
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {bestsellers.map((p) => (

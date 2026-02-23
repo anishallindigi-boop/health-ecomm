@@ -25,14 +25,12 @@ export default function ContactInfo() {
               Visit Us
             </h3>
             <p className="text-gray-600 leading-relaxed text-sm">
-              Timber Market, Sadar Bazar,<br />
-              Karnal (132001), HR,<br />
-              India
+             GJ93+CX5, Gurudwara chowk main markit, Assandh, Haryana 132039
             </p>
           </div>
 
           {/* Email */}
-          <div className="group bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition">
+          {/* <div className="group bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-black text-white mb-6">
               <Mail size={22} />
             </div>
@@ -45,7 +43,7 @@ export default function ContactInfo() {
             >
               itaradesigns.sj@gmail.com
             </a>
-          </div>
+          </div> */}
 
           {/* Phone */}
           <div className="group bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition">

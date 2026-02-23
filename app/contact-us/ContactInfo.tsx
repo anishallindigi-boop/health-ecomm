@@ -59,7 +59,7 @@ export default function ContactInfo() {
               href="tel:+919978996817"
               className="text-gray-600 hover:text-black transition text-sm"
             >
-              +91 99789 96817
+              +91 9350755518
             </a>
           </div>
 

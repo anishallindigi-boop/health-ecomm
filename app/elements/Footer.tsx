@@ -45,9 +45,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           <div>
-            <h3 className="text-2xl font-light mb-4"><img src='/logo1.png' alt='logo' className="w-full" /></h3>
+            <h3 className="text-2xl font-light mb-4"><img src='/logo.jpeg' alt='logo' className="w-30 h-30" /></h3>
             <p className="text-primary text-sm leading-relaxed">
-              Itara Home is Link design-led home décor brand focused on creating modern, minimal and thoughtfully crafted stone products.
+           We provide pure herbs, authentic spices, Ayurvedic medicines, and traditional health essentials carefully selected for quality and effectiveness.
             </p>
           </div>
 
@@ -56,20 +56,20 @@ export default function Footer() {
             <div className="space-y-3 text-sm text-primary">
               <div className="flex items-start">
                 <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
-                <span>house no - 1, sadar bazar, shankar bhawan, karnal, haryana, 132001</span>
+                <span>GJ93+CX5, Gurudwara chowk main markit, Assandh, Haryana 132039</span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <Mail className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
                 <span>itaradesigns.sj@gmail.com</span>
-              </div>
+              </div> */}
               <div className="flex items-start">
                 <Phone className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
-                <span>+91 9978996817</span>
+                <span>+91 9350755518</span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <Clock className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
                 <span>10:00 AM - 07:00 PM</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -128,9 +128,9 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-primary mb-4 md:mb-0">
-            Copyright © 2021 Itara home Project
+            Copyright © 2026 multani pansari
           </p>
-          <div className="flex items-center space-x-6">
+          {/* <div className="flex items-center space-x-6">
             <span className="text-sm text-primary">Follow Us</span>
             <Link href="https://www.facebook.com/share/16NcEN22bK/?mibextid=wwXIfr" className="hover:text-primary transition">
               <Facebook className="w-5 h-5 text-primary" />
@@ -144,7 +144,7 @@ export default function Footer() {
             <Link href="#" className="hover:text-primary transition">
               <Linkedin className="w-5 h-5 text-primary" />
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

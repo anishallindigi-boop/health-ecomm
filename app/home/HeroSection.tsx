@@ -118,13 +118,13 @@ const HeroSection = () => {
           <div className="flex flex-col justify-center items-start relative">
             {phase === "exit" && exitingSlide && (
               <div className={`absolute inset-0 flex flex-col justify-center items-start ${exitLeftClass}`}>
-                <h2 className="font-heading text-3xl md:text-5xl font-bold text-foreground leading-tight mb-6">{exitingSlide.leftTitle}</h2>
+                <h2 className="font-heading text-3xl md:text-5xl font-bold text-primary leading-tight mb-6">{exitingSlide.leftTitle}</h2>
                 <p className="text-gold font-body text-lg tracking-[0.2em] mb-4">{exitingSlide.accent}</p>
                 <button className="bg-gold-gradient text-primary-foreground font-body font-semibold px-8 py-3 rounded tracking-wider uppercase text-sm shadow-gold">{exitingSlide.cta}</button>
               </div>
             )}
             <div className={phase === "enter" ? enterLeftClass : phase === "exit" ? "opacity-0" : ""}>
-              <h2 className="font-heading text-3xl md:text-5xl font-bold text-foreground leading-tight mb-6">{activeSlide.leftTitle}</h2>
+              <h2 className="font-heading text-3xl md:text-5xl font-bold text-primary leading-tight mb-6">{activeSlide.leftTitle}</h2>
               <p className="text-gold font-body text-lg tracking-[0.2em] mb-4">{activeSlide.accent}</p>
               <button className="bg-gold-gradient text-primary-foreground font-body font-semibold px-8 py-3 rounded tracking-wider uppercase text-sm hover:opacity-90 transition-opacity shadow-gold">{activeSlide.cta}</button>
             </div>
@@ -146,21 +146,21 @@ const HeroSection = () => {
           <div className="flex flex-col justify-center items-end text-right relative">
             {phase === "exit" && exitingSlide && (
               <div className={`absolute inset-0 flex flex-col justify-center items-end text-right ${exitRightClass}`}>
-                <h2 className="font-heading text-3xl md:text-5xl font-bold text-foreground leading-tight">{exitingSlide.rightTitle}</h2>
+                <h2 className="font-heading text-3xl md:text-5xl font-bold text-primary leading-tight">{exitingSlide.rightTitle}</h2>
               </div>
             )}
             <div className={phase === "enter" ? enterRightClass : phase === "exit" ? "opacity-0" : ""}>
-              <h2 className="font-heading text-3xl md:text-5xl font-bold text-foreground leading-tight">{activeSlide.rightTitle}</h2>
+              <h2 className="font-heading text-3xl md:text-5xl font-bold text-primary leading-tight">{activeSlide.rightTitle}</h2>
             </div>
           </div>
         </div>
       </div>
 
       {/* Arrows */}
-      <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-gold/20 hover:border-gold transition-colors">
+      <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-background/60 backdrop-blur-sm flex items-center justify-center text-primary hover:bg-gold/20 hover:border-gold transition-colors">
         <ChevronLeft className="w-6 h-6" />
       </button>
-      <button onClick={next} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-background/60 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-gold/20 hover:border-gold transition-colors">
+      <button onClick={next} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-background/60 backdrop-blur-sm flex items-center justify-center text-primary hover:bg-gold/20 hover:border-gold transition-colors">
         <ChevronRight className="w-6 h-6" />
       </button>
 

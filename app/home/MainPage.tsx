@@ -7,6 +7,8 @@ import TrustSection from './TrustSection'
 import TestimonialsSection from './TestimonialsSection'
 import BlogSection from './BlogSection'
 import ShippingBar from './ShippingBar'
+import BmiCalculator from './BmiCalculator'
+
 
 const MainPage = () => {
   return (
@@ -14,8 +16,10 @@ const MainPage = () => {
    <HeroSection/>
    <CategoryIcons/>
    <ProductsSection/>
+
+   <BmiCalculator/>
    <BestsellersSection/>
-   <TrustSection/>
+   {/* <TrustSection/> */}
    <TestimonialsSection/>
    <BlogSection/>
    <ShippingBar/>

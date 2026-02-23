@@ -1,50 +1,87 @@
-import { ShoppingCart, Star } from "lucide-react";
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { Star } from 'lucide-react';
 
 interface ProductCardProps {
   image: string;
   name: string;
   price: number;
-  originalPrice?: number;
+  originalPrice: number;
   rating: number;
+  slug?: string;
 }
 
-const ProductCard = ({ image, name, price, originalPrice, rating }: ProductCardProps) => {
-  return (
-    <div className="group border border-border rounded-lg overflow-hidden bg-card hover:glow-gold transition-all duration-300">
-      <div className="aspect-square overflow-hidden bg-secondary flex items-center justify-center p-4">
+const ProductCard = ({ image, name, price, originalPrice, rating, slug }: ProductCardProps) => {
+  const discount = originalPrice > price 
+    ? Math.round(((originalPrice - price) / originalPrice) * 100) 
+    : 0;
+
+  const CardContent = () => (
+    <div className="group rounded-lg overflow-hidden border border-border hover:shadow-lg transition-all duration-300">
+      {/* Image Container */}
+      <div className="relative aspect-square overflow-hidden bg-gray-100">
         <img
           src={image}
           alt={name}
-          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
+        
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 768px) 50vw, 25vw"
         />
+        
+        {/* Discount Badge */}
+        {discount > 0 && (
+          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+            -{discount}%
+          </span>
+        )}
+
+        {/* Top Rated Badge */}
+        {rating === 5 && (
+          <span className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
+            <Star className="w-3 h-3 fill-current" />
+            Top
+          </span>
+        )}
       </div>
+
+      {/* Content */}
       <div className="p-3">
-        <button className="w-full flex items-center justify-center gap-2 border border-border rounded py-2 mb-3 text-sm font-body text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-          <ShoppingCart className="w-4 h-4" />
-          Add to Cart
-        </button>
-        <h3 className="font-body text-sm font-medium text-foreground truncate">{name}</h3>
-        <div className="flex items-center gap-1 my-1">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <h3 className="font-medium text-sm text-primary line-clamp-2 min-h-[2.5rem]">
+          {name}
+        </h3>
+        
+        {/* Rating Stars */}
+        <div className="flex items-center gap-0.5 my-1">
+          {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`w-3 h-3 ${i < rating ? "fill-primary text-primary" : "text-muted-foreground"}`}
+              className={`w-3 h-3 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
             />
           ))}
         </div>
+
+        {/* Price */}
         <div className="flex items-center gap-2">
-          {originalPrice && (
-            <span className="text-xs text-muted-foreground line-through font-body">
+          <span className="font-bold text-white">₹{price.toLocaleString()}</span>
+          {originalPrice > price && (
+            <span className="text-sm text-muted-foreground line-through">
               ₹{originalPrice.toLocaleString()}
             </span>
           )}
-          <span className="text-sm font-semibold text-foreground font-body">
-            ₹{price.toLocaleString()}
-          </span>
         </div>
       </div>
     </div>
+  );
+
+  // Wrap with Link if slug provided, otherwise div
+  return slug ? (
+    <Link href={`/products/${slug}`} className="block">
+      <CardContent />
+    </Link>
+  ) : (
+    <CardContent />
   );
 };
 

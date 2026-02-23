@@ -72,7 +72,10 @@ quillRef.current.on('text-change', () => {
 });
 
 // custom image handler → OPEN MODAL
-const toolbar = quillRef.current.getModule('toolbar');
+// custom image handler → OPEN MODAL
+const toolbar = quillRef.current.getModule('toolbar') as {
+  addHandler: (name: string, handler: () => void) => void;
+};
 toolbar.addHandler('image', () => {
   const range = quillRef.current!.getSelection(true);
   cursorPosition.current = range?.index || 0;

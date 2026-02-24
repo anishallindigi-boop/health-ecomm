@@ -47,7 +47,7 @@ export default function ShopSort() {
       {/* TRIGGER */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-4 py-2 text-sm border rounded-full hover:bg-gray-100 transition cursor-pointer"
+        className="flex items-center gap-2 px-4 py-2 text-sm bg-primary rounded-full hover:bg-gray-100 transition cursor-pointer"
       >
         <span className="font-medium">
           Sort: {SORT_OPTIONS.find((o) => o.value === activeSort)?.label}

@@ -42,15 +42,15 @@ import {
 
 // Company details
 const COMPANY_DETAILS = {
-  name: "Itara Home",
+  name: "Multani Pansari",
   address: "house no - 1, sadar bazar, shankar bhawan, karnal, haryana, 132001",
   city: "Karnal",
   state: "Haryana",
   pincode: "132001",
   country: "India",
-  phone: "+91 9978996817",
-  email: "itaradesigns.sj@gmail.com",
-  website: "www.itarahome.com",
+  phone: "+91 ",
+  email: "@gmail.com",
+  website: "",
   gstin: "06CGJPJ3628L1Z4",
   // pan: "ABCDE1234F",
   // cin: "U12345MH2020PTC123456",
@@ -316,7 +316,7 @@ export default function InvoicePage() {
             <Button 
               onClick={handlePrint} 
               disabled={isPrinting}
-              className="gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              className="gap-2 bg-background from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white shadow-lg hover:shadow-xl transition-all duration-300"
             >
               {isPrinting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

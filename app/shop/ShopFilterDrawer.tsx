@@ -86,7 +86,7 @@ export default function ShopFilterDrawer() {
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       {/* TRIGGER BUTTON */}
       <SheetTrigger asChild>
-        <button className="flex items-center gap-2 uppercase text-sm font-medium cursor-pointer hover:text-primary transition-colors">
+        <button className="flex items-center gap-2 uppercase text-sm font-medium cursor-pointer text-primary transition-colors">
           <SlidersHorizontal className="h-4 w-4" />
           <span>Filter</span>
           <span className="text-xs text-gray-500">
@@ -112,7 +112,7 @@ export default function ShopFilterDrawer() {
         {/* BODY */}
         <div className="flex-1 px-5 py-4 overflow-y-auto">
           <div>
-            <h4 className="text-sm font-medium mb-3">
+            <h4 className="text-sm font-medium mb-3 text-primary">
               Sub Categories
               <span className="text-xs font-normal text-gray-400 ml-1">
                 ({subCategories.length})
@@ -160,7 +160,7 @@ export default function ShopFilterDrawer() {
             className={cn(
               'w-1/2 py-2.5 text-sm font-medium rounded-md transition-colors',
               selectedSubs.length === 0 && !searchParams.get('subcategories')
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-2'
                 : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
             )}
           >
@@ -169,7 +169,7 @@ export default function ShopFilterDrawer() {
 
           <button
             onClick={applyFilter}
-            className="w-1/2 bg-primary text-white py-2.5 text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"
+            className="w-1/2 bg-background text-primary py-2.5 text-sm font-medium rounded-md transition-colors"
           >
             Apply {selectedSubs.length > 0 && `(${selectedSubs.length})`}
           </button>

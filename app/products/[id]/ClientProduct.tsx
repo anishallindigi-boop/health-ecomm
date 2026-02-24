@@ -387,7 +387,7 @@ const ClientProduct: React.FC<ClientProductProps> = ({ slug }) => {
   };
 
   return (
-    <div className="min-h-screen py-4 md:py-[100px]">
+    <div className="min-h-screen py-4 md:py-[20px]">
       {/* Zoom Modal */}
       {zoomImage && (
         <div 

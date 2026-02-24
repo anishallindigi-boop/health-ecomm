@@ -103,16 +103,10 @@ const AdminReviewsDashboard: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2">
+         
           <Button
             variant="outline"
-            onClick={handleExportCSV}
-            disabled={loading}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button
-            variant="outline"
+            className='bg-primary border-2'
             onClick={handleRefresh}
             disabled={loading}
           >
@@ -139,7 +133,7 @@ const AdminReviewsDashboard: React.FC = () => {
             <CardContent className="space-y-3">
               <Button
                 variant={activeTab === 'all' ? 'default' : 'outline'}
-                className="w-full justify-start"
+                className="w-full justify-start border-2 "
                 onClick={() => handleTabChange('all')}
               >
                 All Reviews
@@ -150,7 +144,7 @@ const AdminReviewsDashboard: React.FC = () => {
               
               <Button
                 variant={activeTab === 'pending' ? 'default' : 'outline'}
-                className="w-full justify-start"
+                className="w-full justify-start text-primary"
                 onClick={() => handleTabChange('pending')}
               >
                 Pending Review
@@ -161,7 +155,7 @@ const AdminReviewsDashboard: React.FC = () => {
               
               <Button
                 variant={activeTab === 'approved' ? 'default' : 'outline'}
-                className="w-full justify-start"
+                className="w-full justify-start text-primary"
                 onClick={() => handleTabChange('approved')}
               >
                 Approved
@@ -172,7 +166,7 @@ const AdminReviewsDashboard: React.FC = () => {
               
               <Button
                 variant={activeTab === 'rejected' ? 'default' : 'outline'}
-                className="w-full justify-start"
+                className="w-full justify-start "
                 onClick={() => handleTabChange('rejected')}
               >
                 Rejected
@@ -224,7 +218,7 @@ const AdminReviewsDashboard: React.FC = () => {
         {/* Main Content Area */}
         <div className="lg:col-span-3">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid grid-cols-4 mb-6">
+            <TabsList className="grid grid-cols-4 mb-6 ">
               <TabsTrigger value="all">All Reviews</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="approved">Approved</TabsTrigger>

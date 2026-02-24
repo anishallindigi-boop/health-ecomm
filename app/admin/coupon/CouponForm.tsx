@@ -528,7 +528,7 @@ export default function CouponForm({ couponId, onClose, onSuccess }: CouponFormP
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 text-sm font-medium text-white bg-background hover:bg-primary/90 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading && (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

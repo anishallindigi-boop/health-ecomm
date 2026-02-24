@@ -198,7 +198,7 @@ export default function ImageUploadModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="!max-w-[960px] w-full max-h-[90vh] overflow-hidden">
+        <DialogContent className="!max-w-[960px] bg-primary w-full max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ImageIcon className="w-5 h-5" />
@@ -393,7 +393,7 @@ export default function ImageUploadModal({
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className='cursor-pointer'
+                className='cursor-pointer bg-primary text-muted-foreground border-2 border-muted-foreground'
                 onClick={() => {
                   setSelected([]);
                   setUploadQueue([]);
@@ -405,7 +405,7 @@ export default function ImageUploadModal({
               
               {multiple && (
                 <Button
-                 className='cursor-pointer'
+                 className='cursor-pointer bg-background'
                   onClick={confirmSelection}
                   disabled={!selected.length || loading || uploading}
                 >

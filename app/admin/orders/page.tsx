@@ -371,7 +371,7 @@ const OrderDetailsDialog = ({ orderId, open, onClose }: { orderId: string; open:
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-7xl max-h-[90vh] bg-primary overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
             <Receipt className="w-6 h-6 text-primary" />
@@ -1145,7 +1145,7 @@ export default function AdminOrdersPage() {
                       <TableCell className="font-mono font-medium">
                         <Link 
                           href={`/admin/orders/${order._id}`}
-                          className="text-primary hover:underline"
+                          className=" hover:underline"
                         >
                           #{order.orderNumber || order._id?.slice(-6).toUpperCase()}
                         </Link>

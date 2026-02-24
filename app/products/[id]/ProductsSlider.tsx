@@ -86,7 +86,7 @@ export default function ProductsSlider() {
 
         {/* ---------- HEADER ---------- */}
         <div className="text-center mb-14">
-          <h2 className="text-3xl font-bold text-stone-800">
+          <h2 className="text-3xl font-bold text-primary">
             Similar Products
           </h2>
           {/* <p className="mt-4 text-gray-600">

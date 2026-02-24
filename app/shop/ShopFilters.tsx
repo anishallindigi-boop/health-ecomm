@@ -64,8 +64,8 @@ export default function ShopFilters() {
               className={cn(
                 'px-4 py-2 text-sm border whitespace-nowrap cursor-pointer transition-colors',
                 activeCategory === cat._id
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary hover:text-primary'
+                  ? 'bg-primary text-muted-foreground border-primary'
+                  : ' text-primary border-gray-300 hover:border-primary hover:text-primary'
               )}
             >
               {cat.name.toUpperCase()}
@@ -77,7 +77,7 @@ export default function ShopFilters() {
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="px-4 py-2 text-sm border border-gray-300 whitespace-nowrap cursor-pointer hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm border border-gray-300 text-primary whitespace-nowrap cursor-pointer hover:bg-gray-5 transition-colors"
           >
             Clear Filters
           </button>

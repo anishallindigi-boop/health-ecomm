@@ -147,7 +147,7 @@ export default function CouponTable() {
         </div>
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-background text-white rounded-xl font-medium "
         >
           <Plus className="w-4 h-4" />
           Create Coupon

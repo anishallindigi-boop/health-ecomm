@@ -50,14 +50,14 @@ export default function ProductGrid({ products }: any) {
               </div>
               
               {/* Product Info */}
-              <h3 className={`mt-3 text-sm font-medium ${soldOut ? 'text-gray-400' : 'text-gray-900'}`}>
+              <h3 className={`mt-3 text-sm font-medium ${soldOut ? 'text-gray-400' : 'text-primary'}`}>
                 {p.name}
               </h3>
               
               <div className="mt-1 flex items-center gap-2">
                 {p.discountPrice ? (
                   <>
-                    <p className={`text-sm font-semibold ${soldOut ? 'text-gray-400' : 'text-gray-900'}`}>
+                    <p className={`text-sm font-semibold ${soldOut ? 'text-gray-400' : 'text-primary'}`}>
                       ₹{p.discountPrice}
                     </p>
                     {!soldOut && p.price > p.discountPrice && (

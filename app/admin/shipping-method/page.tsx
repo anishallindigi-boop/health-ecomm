@@ -342,7 +342,7 @@ const filteredShippingMethods = shippingMethods.filter((method) => {
 
       {/* Create/Edit Shipping Method Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] bg-primary"> 
           <DialogHeader>
             <DialogTitle>
               {selectedShippingId ? "Edit" : "Add"} Shipping Method

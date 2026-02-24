@@ -28,7 +28,7 @@ export default function ShopPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-semibold mb-6">Decorations</h1>
+      <h1 className="text-3xl text-primary font-semibold mb-6">Decorations</h1>
 
       <ShopFilters />
 

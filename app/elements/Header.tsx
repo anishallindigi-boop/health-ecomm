@@ -195,7 +195,7 @@ export default function HeaderImproved() {
         {/* LEFT: Logo */}
         <Link href="/" className="flex-shrink-0">
           <img 
-            src="/logo.jpeg" 
+            src="/logo.png" 
             alt="logo" 
             className="h-[50px] w-auto" 
           />

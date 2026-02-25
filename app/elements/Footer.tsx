@@ -45,7 +45,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           <div>
-            <h3 className="text-2xl font-light mb-4"><img src='/logo.jpeg' alt='logo' className="w-30 h-30" /></h3>
+            <h3 className="text-2xl font-light mb-4"><img src='/logo.png' alt='logo' className="w-30 h-30" /></h3>
             <p className="text-primary text-sm leading-relaxed">
            We provide pure herbs, authentic spices, Ayurvedic medicines, and traditional health essentials carefully selected for quality and effectiveness.
             </p>

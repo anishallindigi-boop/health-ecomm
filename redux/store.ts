@@ -11,8 +11,6 @@ import  WishlistSlice  from './slice/WishlistSlice';
 import VariationSlice from './slice/VariationSlice';
 import ImageSlice from './slice/ImageSlice';
 import SubCategorySlice from './slice/SubCategorySlice';
-import EnquirySlice from './slice/EnquirySlice';
-import StylingEnquirySlice from './slice/StylingEnquirySlice';
 import CouponSlice from './slice/CouponSlice';
 import ReviewSlice from './slice/ReviewSlice';
 import SeoReducer from './slice/SeoSlice';
@@ -32,8 +30,7 @@ const store = configureStore({
     wishlist:WishlistSlice,
     image: ImageSlice,
     subcategory: SubCategorySlice,
-    enquiry: EnquirySlice,
-    stylingenquiry: StylingEnquirySlice,
+
     coupon: CouponSlice,
     review: ReviewSlice,
          seo:SeoReducer,

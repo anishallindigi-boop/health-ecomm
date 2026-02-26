@@ -3,10 +3,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <section className="relative bg-gradient-to-br from-black-600 via-black-600 to-gray-700 py-40 overflow-hidden    bg-cover bg-center bg-no-repeat"    style={{
-          // change to your actual image path
-          backgroundImage: "url('/about-hero.png')",
-        }}>
+    <section className="relative bg-background py-40 overflow-hidden    bg-cover bg-center bg-no-repeat"    >
     <div className="absolute inset-0">
         <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full morphing-blob animate-float"></div>
         <div className="absolute bottom-10 left-10 w-80 h-80 bg-white/5 rounded-full morphing-blob animate-float" style={{ animationDelay: '3s' }}></div>
@@ -23,9 +20,9 @@ const page = () => {
                 Our <span className="text-yellow-300">Blog</span>
             </h1>
 
-            <p className="text-2xl max-w-4xl mx-auto font-light leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            {/* <p className="text-2xl max-w-4xl mx-auto font-light leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                 Stay updated with the latest insights, trends, and expertise from the world of real estate development and township planning
-            </p>
+            </p> */}
         </div>
     </div>
 </section>

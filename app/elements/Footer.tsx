@@ -76,10 +76,10 @@ export default function Footer() {
           <div>
             <h4 className="text-lg text-primary mb-6">Quicklinks</h4>
             <ul className="space-y-3 text-sm text-primary">
-              <li><Link href="#" className="hover:text-white transition">Home</Link></li>
-              <li><Link href="#" className="hover:text-white transition">About</Link></li>
-              <li><Link href="#" className="hover:text-white transition">FAQs</Link></li>
-              <li><Link href="#" className="hover:text-white transition">Blog</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Home</Link></li>
+              <li><Link href="about-us" className="hover:text-white transition">About</Link></li>
+              {/* <li><Link href="#" className="hover:text-white transition">FAQs</Link></li> */}
+              <li><Link href="/blog" className="hover:text-white transition">Blog</Link></li>
               <li><Link href="#" className="hover:text-white transition">Contact</Link></li>
             </ul>
           </div>
@@ -115,7 +115,7 @@ export default function Footer() {
 
                     <button
                       aria-label="Subscribe"
-                      className="ml-2 flex cursor-pointer items-center justify-center w-10 h-10 rounded-full bg-white text-primary hover:bg-gray-200 transition"
+                      className="ml-2 flex cursor-pointer items-center justify-center w-10 h-10 rounded-full bg-background text-primary hover:bg-gray-200 transition"
                     >
                       <ArrowRight size={18} />
                     </button>
@@ -130,21 +130,21 @@ export default function Footer() {
           <p className="text-sm text-primary mb-4 md:mb-0">
             Copyright © 2026 multani pansari
           </p>
-          {/* <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-6">
             <span className="text-sm text-primary">Follow Us</span>
-            <Link href="https://www.facebook.com/share/16NcEN22bK/?mibextid=wwXIfr" className="hover:text-primary transition">
-              <Facebook className="w-5 h-5 text-primary" />
+            <Link href="/return-refund-policy" className="hover:text-primary transition">
+              Return & Refund Policy
             </Link>
-            <Link href="https://www.instagram.com/itarahome/" className="hover:text-primary transition">
-              <Instagram className="w-5 h-5 text-primary" />
+            <Link href="/privacy-policy" className="hover:text-primary transition">
+              Privacy Policy
             </Link>
-            <Link href="#" className="hover:text-primary transition">
-              <Youtube className="w-5 h-5 text-primary" />
+            <Link href="/shipping-policy" className="hover:text-primary transition">
+              Shipping Policy
             </Link>
-            <Link href="#" className="hover:text-primary transition">
-              <Linkedin className="w-5 h-5 text-primary" />
+            <Link href="/cancellation-policy" className="hover:text-primary transition">
+              Cancellation Policy
             </Link>
-          </div> */}
+          </div>
         </div>
       </div>
     </footer>

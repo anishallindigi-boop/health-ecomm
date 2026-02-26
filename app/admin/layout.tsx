@@ -85,8 +85,8 @@ React.useEffect(() => {
     {name:'Shipping Methods',href:'/admin/shipping-method',icon:FileText},
         { name: 'Blog category', href: '/admin/blog-category', icon: Users },
     { name: 'Blogs', href: '/admin/blogs', icon: FileText },
-    { name: 'EnquiryForm Data', href: '/admin/enquiry-form-data', icon: FileText },
-    { name: 'StylingForm Data', href: '/admin/stylingform-data', icon: FileText },
+    // { name: 'EnquiryForm Data', href: '/admin/enquiry-form-data', icon: FileText },
+    // { name: 'StylingForm Data', href: '/admin/stylingform-data', icon: FileText },
     { name: 'contact Form Data', href: '/admin/contactform-data', icon: FileText },
     { name: 'Newsletter', href: '/admin/newsletter', icon: FileText },
  

@@ -80,7 +80,7 @@ export default async function Page({
 
   if (!blog) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="text-6xl mb-4">📝</div>
           <h2 className="text-2xl font-bold mb-2">Blog post not found</h2>
@@ -103,10 +103,10 @@ export default async function Page({
     });
 
   return (
-    <div className="min-h-screen bg-white ">
+    <div className="min-h-screen bg-background ">
       {/* Header Section */}
-      <section className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 py-40 overflow-hidden bg-no-repeat bg-cover bg-black"  style={{
-  backgroundImage: `url(${API_URL}${blog.image})`
+      <section className="relative overflow-hidden bg-no-repeat bg-cover "  style={{
+  backgroundImage: `url($${blog.image})`
   }}>
         <div className="absolute inset-0">
           <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full animate-pulse"></div>
@@ -168,7 +168,7 @@ export default async function Page({
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div
-            className="prose prose-lg max-w-none"
+            className="prose prose-lg max-w-none text-primary"
             dangerouslySetInnerHTML={{ __html: blog.content }}
           />
         </div>

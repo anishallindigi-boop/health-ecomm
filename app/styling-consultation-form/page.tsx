@@ -72,7 +72,7 @@ dispatch(createStylingEnquiry(formData))
           Styling Consultation Enquiry
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Interested in styling your space with Itara Home? Share a few details
+          Interested in styling your space with Multani Pansari? Share a few details
           below and we’ll get in touch to understand your requirements.
         </p>
       </div>
@@ -231,7 +231,7 @@ dispatch(createStylingEnquiry(formData))
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Include Itara Home products?
+            Include Multani Pansari products?
           </label>
           <select
             name="includeProducts"

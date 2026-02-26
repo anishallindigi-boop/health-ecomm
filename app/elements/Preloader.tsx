@@ -22,7 +22,7 @@ interface Particle {
 const Preloader = ({ 
   onComplete, 
   minDisplayTime = 2500,
-  logoSrc = '/logo.jpeg' 
+  logoSrc = '/logo.png' 
 }: PreloaderProps) => {
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<'loading' | 'complete' | 'exiting'>('loading');

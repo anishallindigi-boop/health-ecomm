@@ -6,13 +6,13 @@ const API_KEY = process.env.NEXT_PUBLIC_API_KEY!;
 
 /* ✅ DEFAULT SEO (FALLBACK) */
 export const defaultSEO = {
-  title: "Multani Pansari | Premium Home Decor & Lifestyle Products",
+  title: "",
   description:
-    "Discover Multani Pansari's curated collection of premium home decor, furniture, and lifestyle products. Transform your living spaces with our elegant, modern, and sustainable designs.",
+    ".",
   keywords: "Multani Pansari, home decor, furniture, interior design, lifestyle products, home accessories, modern decor, sustainable home goods",
   canonical: "https://www.multanipansari.com/",
   ogImage: "https://www.multanipansari.com/og-image.jpg",
-  twitterHandle: "@itarahome",
+  twitterHandle: "",
   siteName: "Multani Pansari",
   locale: "en_US",
   type: "website",

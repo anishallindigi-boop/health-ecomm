@@ -290,7 +290,7 @@ function TrackOrderContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-slate-900 hover:text-slate-700 transition-colors">
             <Package className="w-8 h-8 text-blue-600" />
-            <span className="text-xl font-bold tracking-tight">Itara Home</span>
+            <span className="text-xl font-bold tracking-tight">Multani Pansari</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-slate-600 hover:text-slate-900 font-medium">Home</Link>

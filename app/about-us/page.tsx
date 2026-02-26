@@ -10,13 +10,13 @@ const API_KEY = process.env.NEXT_PUBLIC_API_KEY!;
 
 /* ✅ DEFAULT SEO FALLBACK */
 const defaultSEO = {
-  title: 'About Us | Itara Home - Our Story, Mission & Values',
-  description: 'Discover the story behind Itara Home. We curate premium, sustainable home decor and lifestyle products to help you create spaces that inspire and comfort.',
-  keywords: 'Itara Home, about us, our story, home decor brand, sustainable living, interior design company',
+  title: 'About Us',
+  description: '.',
+  keywords: '',
 
-    canonical: 'https://itarahome.com/about-us',
+    canonical: 'https://multanipansari.com/about-us',
 
-    ogImage: "https://itarahome.com/og-image.jpg",
+    ogImage: "https://multanipansari.com/og-image.jpg",
 };
 
 export async function generateMetadata() {

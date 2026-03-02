@@ -9,10 +9,11 @@ import { Sparkles, Moon, Sun, Cloud, Activity, Brain, Coffee, Wind, Droplet, Fla
 type Dosha = 'vata' | 'pitta' | 'kapha'
 type Option = { text: string; dosha: Dosha }
 
+// Fix: Use React.ReactNode instead of JSX.Element
 interface Question {
   id: number
   text: string
-  icon: JSX.Element
+  icon: React.ReactNode
   options: Option[]
 }
 
@@ -121,7 +122,8 @@ const questions: Question[] = [
 
 type DoshaScores = Record<Dosha, number>
 
-const doshaNames: Record<Dosha, { name: string; desc: string; color: string; icon: JSX.Element; suggestions: string[] }> = {
+// Fix: Use React.ReactNode for icon in doshaNames
+const doshaNames: Record<Dosha, { name: string; desc: string; color: string; icon: React.ReactNode; suggestions: string[] }> = {
   vata: {
     name: 'वात (Vata)',
     desc: 'वात गति, वायु एवं आकाश तत्व प्रधान। रचनात्मक, ऊर्जावान, परिवर्तनशील।',
@@ -224,7 +226,7 @@ export default function DoshaTest() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-7xl relative"
+        className="w-full max-w-3xl relative"
       >
         {/* Header Card */}
         <motion.div

@@ -41,7 +41,7 @@ const BestsellersSecton = () => {
     <section className="py-16 bg-background container">
      <div className='py-6'>
        <p className='text-center text-white'>Best Selling Products</p>
-      <h2 className="font-heading text-3xl md:text-4xl font-bold text-center text-foreground mb-10">
+      <h2 className="font-heading text-3xl md:text-4xl font-bold text-center text-primary mb-10">
         शरीर हो या मन की थकान, मुलतानी पंसारी सबका समाधान!
       </h2>
      </div>

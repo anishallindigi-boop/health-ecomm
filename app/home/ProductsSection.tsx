@@ -37,8 +37,8 @@ const ProductsSection = () => {
   if (!topRatedProducts?.length) return null;
 
   return (
-    <section className="py-16 bg-background container">
-      <h2 className="font-heading text-3xl md:text-4xl font-bold text-center text-foreground mb-10">
+    <section className="py-10 bg-background container">
+      <h2 className="font-heading text-3xl md:text-4xl font-bold text-center text-primary py-10">
         Our Top Rated Products
       </h2>
 

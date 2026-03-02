@@ -131,7 +131,7 @@ export default function Footer() {
             Copyright © 2026 multani pansari
           </p>
           <div className="flex items-center space-x-6">
-            <span className="text-sm text-primary">Follow Us</span>
+            {/* <span className="text-sm text-primary">Follow Us</span> */}
             <Link href="/return-refund-policy" className="hover:text-primary transition">
               Return & Refund Policy
             </Link>

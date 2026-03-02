@@ -3,7 +3,9 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, Flame, Lightbulb, User, Calendar, Ruler, Weight, Heart, Activity, PenLine, Mars, Sparkles } from 'lucide-react';
+import { Calculator, Flame, Lightbulb, User, Calendar, Ruler, Weight, Heart, Activity, PenLine, Mars, Sparkles, ArrowBigRight } from 'lucide-react';
+import Link from 'next/link';
+
 
 interface BMIResult {
   bmi: number;
@@ -43,22 +45,22 @@ export default function BmiCalculator() {
       category = 'Underweight';
       color = 'from-blue-400 to-blue-600';
       suggestion = 'आपको वजन बढ़ाने की जरूरत है। संतुलित आहार लें और ताकत बढ़ाने वाले व्यायाम करें।';
-      product = 'मुल्तानी पंसारी - वजन बढ़ाने वाला स्पेशल फॉर्मूला';
+      product = 'मुलतानी पंसारी - वजन बढ़ाने वाला स्पेशल फॉर्मूला';
     } else if (roundedBMI >= 18.5 && roundedBMI < 25) {
       category = 'Normal Weight';
       color = 'from-green-400 to-green-600';
       suggestion = 'बहुत बढ़िया! आपका वजन संतुलित है। इसी तरह स्वस्थ जीवनशैली बनाए रखें।';
-      product = 'मुल्तानी पंसारी - हेल्थ मेन्टेनेंस टॉनिक';
+      product = 'मुलतानी पंसारी - हेल्थ मेन्टेनेंस टॉनिक';
     } else if (roundedBMI >= 25 && roundedBMI < 30) {
       category = 'Overweight';
       color = 'from-yellow-400 to-yellow-600';
       suggestion = 'वजन थोड़ा अधिक है। नियमित व्यायाम और संतुलित आहार से इसे कम कर सकते हैं।';
-      product = 'मुल्तानी पंसारी - मेटाबॉलिज्म बूस्टर फॉर्मूला';
+      product = 'मुलतानी पंसारी - मेटाबॉलिज्म बूस्टर फॉर्मूला';
     } else {
       category = 'Obese';
       color = 'from-red-400 to-red-600';
       suggestion = 'स्वास्थ्य के लिए वजन कम करना जरूरी है। डॉक्टर की सलाह लें और सही दिनचर्या अपनाएं।';
-      product = 'मुल्तानी पंसारी - वजन घटाने वाला हर्बल कॉम्बो';
+      product = 'मुलतानी पंसारी - वजन घटाने वाला हर्बल कॉम्बो';
     }
 
     setResult({
@@ -79,6 +81,11 @@ export default function BmiCalculator() {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-6xl mx-auto text-center mb-8"
       >
+       <div className="bg-green-500 text-primary rounded-full w-50 float-right px-4 py-2">
+  <Link href="/dosha-test">
+  Dosha Test     <ArrowBigRight className="inline w-4 h-4 mr-2 text-primary" />
+  </Link>
+</div>
         <div className="inline-block">
           <h2 className="text-3xl md:text-4xl font-bold text-white bg-clip-text text-transparent">
             जानिए आपका Body Score और पाई सही
@@ -257,7 +264,7 @@ export default function BmiCalculator() {
                       <Flame className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-700 mb-1">मुल्तानी पंसारी सुझाव</p>
+                      <p className="font-semibold text-gray-700 mb-1">मुलतानी पंसारी सुझाव</p>
                       <p className="text-gray-700 font-medium">{result.product}</p>
                     </div>
                   </div>

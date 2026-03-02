@@ -449,8 +449,8 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
 
   /* ---------------- MAIN UI ---------------- */
   return (
-    <div className="min-h-screen py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
+    <div className="min-h-screen py-5">
+      <div className="max-w-7xl mx-auto px-4 ">
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center justify-between mb-6">
@@ -491,9 +491,9 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Address, Shipping */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="col-span-1 lg:col-span-2 space-y-8">
             {/* Cart Items with Quantity Controls */}
             <Card className="p-6 border-0 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <div className="flex items-center gap-3 mb-6">
@@ -795,7 +795,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
 
             {/* Shipping Method */}
             <Card className="p-8 border-0 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-8">
                 <div className="flex items-center gap-3">
                   <div className="p-3 rounded-xl bg-gradient-to-br from-green-100 to-green-50">
                     <Truck className="w-6 h-6 text-green-600" />
@@ -840,7 +840,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                   {shippingMethods.map((m: any) => (
                     <label
                       key={m._id}
-                      className={`flex items-center justify-between p-6 border-2 rounded-xl cursor-pointer transition-all hover:border-primary hover:shadow-md ${
+                      className={`className="flex flex-col lg:flex-row lg:items-center justify-between p-4 lg:p-6 border-2 rounded-xl cursor-pointer transition-all hover:border-primary hover:shadow-md border-primary bg-primary/5 shadow-md" ${
                         selectedShipping?._id === m._id 
                           ? 'border-primary bg-primary/5 shadow-md' 
                           : 'border-gray-200 hover:border-gray-300'

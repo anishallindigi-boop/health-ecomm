@@ -4,21 +4,19 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { RootState } from '@/redux/store';
 import { GetProductCategory } from '@/redux/slice/ProductCategorySlice';
-import Image from 'next/image';
 import Link from 'next/link';
 
 const CategoryIcons = () => {
   const dispatch = useAppDispatch();
-  const { categories, loading,fetched  } = useAppSelector(
+  const { categories, loading, fetched } = useAppSelector(
     (state: RootState) => state.productcategory
   );
 
   useEffect(() => {
-    // Only fetch if not already fetched
     if (!fetched) {
       dispatch(GetProductCategory());
     }
-  }, [dispatch, fetched]); // Add fetched to dependency array
+  }, [dispatch, fetched]);
 
   const activeCategories = categories.filter(
     (cat) => cat.status === 'published' && cat.isActive
@@ -26,47 +24,60 @@ const CategoryIcons = () => {
 
   if (loading) {
     return (
-      <section className="py-10 bg-secondary">
-        <div className="container">
-          <div className="flex items-center justify-center gap-4 py-4">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+      <section className="py-6 bg-secondary">
+        <div className="container flex justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-10 bg-secondary">
-      <div className="container">
-        <div className="flex items-center justify-start gap-6 overflow-x-auto pb-2 scrollbar-hide">
-          {activeCategories.map((category) => (
+    <section className="py-6 bg-secondary container overflow-hidden">
+      <div className="relative">
+        <div className="flex gap-6 animate-marquee whitespace-nowrap">
+          {[...activeCategories, ...activeCategories].map((category, index) => (
             <Link
-              key={category._id}
+              key={`${category._id}-${index}`}
               href={`/shop?categories=${category._id}`}
-              className="flex flex-col items-center gap-2 min-w-[80px] cursor-pointer group"
+              className="flex flex-col items-center min-w-[120px] group"
             >
-              <div className="w-38 h-38 rounded-full  border-2 border-border flex items-center justify-center group-hover:border-primary group-hover:shadow-lg group-hover:shadow-primary/20 transition-all overflow-hidden">
+              <div className="w-16 h-16 rounded-full border border-border flex items-center justify-center overflow-hidden group-hover:border-primary transition-all">
                 {category.image ? (
                   <img
                     src={category.image}
                     alt={category.name}
-                   
-                    className=" object-cover"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-xs font-medium text-muted-foreground">
+                  <div className="w-full h-full bg-muted flex items-center justify-center text-xs font-medium">
                     {category.name.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors whitespace-nowrap text-center max-w-[80px] truncate">
+              <span className="text-xs mt-2 text-muted-foreground group-hover:text-foreground transition-colors truncate w-20 text-center">
                 {category.name}
               </span>
             </Link>
           ))}
         </div>
       </div>
+
+      {/* Tailwind Custom Animation */}
+      <style jsx>{`
+        .animate-marquee {
+          animation: marquee 20s linear infinite;
+        }
+
+        @keyframes marquee {
+          from {
+            transform: translateX(0%);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </section>
   );
 };

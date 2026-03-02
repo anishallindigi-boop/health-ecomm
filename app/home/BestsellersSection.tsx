@@ -42,7 +42,7 @@ const BestsellersSecton = () => {
      <div className='py-6'>
        <p className='text-center text-white'>Best Selling Products</p>
       <h2 className="font-heading text-3xl md:text-4xl font-bold text-center text-foreground mb-10">
-        शरीर हो या मन की थकान, मुल्तानी पंसारी सबका समाधान!
+        शरीर हो या मन की थकान, मुलतानी पंसारी सबका समाधान!
       </h2>
      </div>
      

@@ -21,12 +21,12 @@ const ProductCard = ({ image, name, price, originalPrice, rating, slug }: Produc
   const CardContent = () => (
     <div className="group rounded-lg overflow-hidden border border-border hover:shadow-lg transition-all duration-300">
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-gray-100">
+      <div className="relative aspect-[4/4] overflow-hidden bg-[#c3c1ba]">
         <img
           src={image}
           alt={name}
         
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className="object-cover group-hover:scale-105 transition-transform duration-300 w-full h-full"
           sizes="(max-width: 768px) 50vw, 25vw"
         />
         

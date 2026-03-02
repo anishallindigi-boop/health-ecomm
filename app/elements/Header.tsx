@@ -710,7 +710,7 @@ export default function HeaderImproved() {
       </AnimatePresence>
 
       {/* Spacer for fixed header */}
-      <div className="h-20" />
+      <div className="h-9" />
     </>
   );
 }

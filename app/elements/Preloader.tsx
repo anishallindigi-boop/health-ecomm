@@ -1,267 +1,353 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface PreloaderProps {
   onComplete: () => void;
   minDisplayTime?: number;
   logoSrc?: string;
-}
-
-interface Particle {
-  id: number;
-  width: number;
-  height: number;
-  left: number;
-  top: number;
-  animationDelay: number;
-  animationDuration: number;
+  brandName?: string;
 }
 
 const Preloader = ({ 
   onComplete, 
   minDisplayTime = 2500,
-  logoSrc = '/logo.png' 
+  logoSrc = '/logo.png',
+  brandName = 'Multani Pansari'
 }: PreloaderProps) => {
   const [progress, setProgress] = useState(0);
-  const [phase, setPhase] = useState<'loading' | 'complete' | 'exiting'>('loading');
+  const [phase, setPhase] = useState<'loading' | 'exiting'>('loading');
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [mounted, setMounted] = useState(false);
-
-  // Generate particles only on client side to avoid hydration mismatch
-  const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
     setMounted(true);
-    // Generate random particles after mount (client-side only)
-    const newParticles: Particle[] = Array.from({ length: 6 }, (_, i) => ({
-      id: i,
-      width: Math.random() * 100 + 50,
-      height: Math.random() * 100 + 50,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      animationDelay: i * 0.5,
-      animationDuration: 3 + Math.random() * 2,
-    }));
-    setParticles(newParticles);
   }, []);
 
-  // Simulate realistic loading progress
+  // Smooth progress animation
   useEffect(() => {
-    let rafId: number;
-    let startTime: number;
-    let progressValue = 0;
+    const startTime = Date.now();
+    let animationFrame: number;
 
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
+    const updateProgress = () => {
+      const elapsed = Date.now() - startTime;
+      const rawProgress = Math.min((elapsed / minDisplayTime) * 100, 100);
       
+      // Easing function for smoother progression
+      const easeOutCubic = 1 - Math.pow(1 - rawProgress / 100, 3);
+      const easedProgress = Math.min(easeOutCubic * 100, 100);
+      
+      setProgress(easedProgress);
+
       if (elapsed < minDisplayTime) {
-        const normalizedTime = elapsed / minDisplayTime;
-        progressValue = Math.min(
-          100,
-          normalizedTime * (2 - normalizedTime) * 100
-        );
-        setProgress(Math.floor(progressValue));
-        rafId = requestAnimationFrame(animate);
+        animationFrame = requestAnimationFrame(updateProgress);
       } else {
         setProgress(100);
-        setPhase('complete');
-        setTimeout(() => setPhase('exiting'), 400);
-        setTimeout(onComplete, 800);
+        setTimeout(() => {
+          setPhase('exiting');
+          setTimeout(onComplete, 800);
+        }, 200);
       }
     };
 
-    rafId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafId);
+    animationFrame = requestAnimationFrame(updateProgress);
+    return () => cancelAnimationFrame(animationFrame);
   }, [minDisplayTime, onComplete]);
 
   const handleImageLoad = useCallback(() => {
+    console.log('Logo loaded successfully:', logoSrc);
     setImageLoaded(true);
-  }, []);
+    setImageError(false);
+  }, [logoSrc]);
 
-  // Prevent hydration mismatch by not rendering particles until mounted
-  if (!mounted) {
-    return (
-      <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white">
-        <div className="animate-pulse">
-          <img src={logoSrc} alt="Loading" className="w-auto h-16 md:h-20 object-contain opacity-50" />
-        </div>
-      </div>
-    );
-  }
+  const handleImageError = useCallback(() => {
+    console.error('Failed to load logo:', logoSrc);
+    setImageError(true);
+    // Still mark as loaded to show fallback
+    setImageLoaded(true);
+  }, [logoSrc]);
+
+  // Fallback logo component (first letter of brand name)
+  const FallbackLogo = () => (
+    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 rounded-full">
+      <span className="text-4xl font-bold text-gray-700">
+        {brandName.charAt(0)}
+      </span>
+    </div>
+  );
 
   return (
     <>
       <style jsx global>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
+        @keyframes rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.05); }
+        @keyframes rotate-reverse {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
         }
-        @keyframes slide-up {
-          0% { transform: translateY(20px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
+        @keyframes dash {
+          0% { stroke-dashoffset: 1000; }
+          100% { stroke-dashoffset: 0; }
         }
+        @keyframes pulse-soft {
+          0%, 100% { opacity: 0.1; transform: scale(1); }
+          50% { opacity: 0.2; transform: scale(1.05); }
+        }
+      `}</style>
+
+      <AnimatePresence mode="wait">
+        {phase === 'loading' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-white"
+          >
+            {/* Subtle gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100" />
+            
+            {/* Floating particles - very subtle - only render when mounted */}
+            {mounted && (
+              <div className="absolute inset-0 overflow-hidden">
+                {[...Array(6)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{
+                      y: [0, -20, 0],
+                      x: [0, 10, 0],
+                      opacity: [0.03, 0.06, 0.03],
+                    }}
+                    transition={{
+                      duration: 8 + i * 2,
+                      repeat: Infinity,
+                      delay: i * 1,
+                    }}
+                    className="absolute rounded-full bg-gray-200"
+                    style={{
+                      width: 100 + i * 50,
+                      height: 100 + i * 50,
+                      left: `${10 + i * 15}%`,
+                      top: `${20 + i * 10}%`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Main content */}
+            <div className="relative z-10 flex flex-col items-center">
+              {/* Logo in circle - main focus */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ 
+                  duration: 1,
+                  type: "spring",
+                  damping: 15,
+                  stiffness: 100
+                }}
+                className="relative mb-12"
+              >
+                {/* Outer rotating ring */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{
+                    duration: 20,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute inset-0 rounded-full border-2 border-dashed border-gray-300"
+                  style={{ 
+                    boxShadow: '0 0 30px rgba(0,0,0,0.03)'
+                  }}
+                />
+
+                {/* Middle ring - reverse rotation */}
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{
+                    duration: 15,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute inset-[-8px] rounded-full border border-gray-200"
+                />
+
+                {/* Inner ring with dots */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{
+                    duration: 12,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="absolute inset-[-4px] rounded-full"
+                  style={{
+                    background: 'conic-gradient(from 0deg, transparent, rgba(0,0,0,0.02), transparent)'
+                  }}
+                />
+
+                {/* Pulsing circle behind logo */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.1, 0.15, 0.1],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  className="absolute inset-[-20px] rounded-full bg-gradient-to-r from-gray-200/30 to-gray-300/30 blur-xl"
+                />
+
+                {/* Logo container */}
+                <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full bg-white shadow-xl flex items-center justify-center overflow-hidden">
+                  {/* Inner glow */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gray-100 to-white" />
+                  
+                  {/* Logo image with Next.js Image component */}
+                  <div className="relative z-10 w-24 h-24 md:w-32 md:h-32">
+                    {!imageError ? (
+                      <Image
+                        src={logoSrc}
+                        alt={brandName}
+                        fill
+                        sizes="(max-width: 768px) 96px, 128px"
+                        className={cn(
+                          "object-contain transition-all duration-700",
+                          imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                        )}
+                        onLoad={handleImageLoad}
+                        onError={handleImageError}
+                        priority
+                      />
+                    ) : (
+                      <FallbackLogo />
+                    )}
+                    
+                    {/* Show loading placeholder if image not loaded and no error */}
+                    {!imageLoaded && !imageError && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Decorative dots around inner circle */}
+                  <div className="absolute inset-2 rounded-full border border-gray-200/50" />
+                  <div className="absolute inset-4 rounded-full border border-gray-100" />
+                </div>
+
+                {/* Orbiting dots - only animate when mounted */}
+                {mounted && [0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-2 h-2 rounded-full bg-gray-400"
+                    style={{
+                      left: '50%',
+                      top: '50%',
+                      transform: `rotate(${angle}deg) translateX(100px)`,
+                      opacity: 0.2,
+                    }}
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.2, 0.4, 0.2],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: i * 0.25,
+                    }}
+                  />
+                ))}
+              </motion.div>
+
+              {/* Brand name */}
+              <motion.h2
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                className="text-3xl md:text-4xl font-light text-gray-800 mb-3 tracking-wide"
+              >
+                {brandName}
+              </motion.h2>
+
+              {/* Loading text with progress */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-center mb-6"
+              >
+                <p className="text-gray-400 text-sm uppercase tracking-[0.3em]">
+                  {progress < 30 && "Initializing"}
+                  {progress >= 30 && progress < 60 && "Loading"}
+                  {progress >= 60 && progress < 90 && "Preparing"}
+                  {progress >= 90 && "Almost ready"}
+                </p>
+              </motion.div>
+
+              {/* Progress indicator - minimal */}
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 200, opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+                className="relative w-48 h-0.5 bg-gray-100 overflow-hidden rounded-full"
+              >
+                <motion.div
+                  className="absolute top-0 left-0 h-full bg-gray-600 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent" 
+                       style={{ animation: 'progress-shine 1.5s infinite' }} />
+                </motion.div>
+              </motion.div>
+
+              {/* Percentage - subtle */}
+              <motion.span
+                key={progress}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 0.4, y: 0 }}
+                className="mt-3 text-xs text-gray-400 font-mono"
+              >
+                {Math.round(progress)}%
+              </motion.span>
+            </div>
+
+            {/* Bottom corner accents */}
+            <div className="absolute bottom-6 left-6 text-xs text-gray-300 font-light tracking-widest">
+              ✦ SINCE 1980 ✦
+            </div>
+            <div className="absolute top-6 right-6 flex space-x-1">
+              {[...Array(3)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={mounted ? { scale: [1, 1.2, 1] } : {}}
+                  transition={{ duration: 1, repeat: Infinity, delay: i * 0.3 }}
+                  className="w-1 h-1 bg-gray-300 rounded-full"
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style jsx>{`
         @keyframes progress-shine {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
         }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-        .animate-shimmer {
-          background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
-          background-size: 200% 100%;
-          animation: shimmer 2s infinite;
-        }
-        .animate-pulse-glow {
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
-        .animate-slide-up {
-          animation: slide-up 0.6s ease-out forwards;
-        }
-        .animate-progress-shine {
-          animation: progress-shine 1.5s infinite;
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        .loader-curtain {
-          clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
-          transition: clip-path 0.8s cubic-bezier(0.77, 0, 0.175, 1);
-        }
-        .loader-curtain.exit {
-          clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
-        }
       `}</style>
-
-      <div
-        className={cn(
-          'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white',
-          'transition-all duration-700 ease-in-out',
-          phase === 'exiting' && 'loader-curtain exit opacity-0'
-        )}
-      >
-        {/* Animated background particles - only render after mount */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {particles.map((particle) => (
-            <div
-              key={particle.id}
-              className="absolute rounded-full bg-black/5 animate-float"
-              style={{
-                width: `${particle.width}px`,
-                height: `${particle.height}px`,
-                left: `${particle.left}%`,
-                top: `${particle.top}%`,
-                animationDelay: `${particle.animationDelay}s`,
-                animationDuration: `${particle.animationDuration}s`,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Main content container */}
-        <div className={cn(
-          'relative z-10 flex flex-col items-center space-y-8',
-          'animate-slide-up',
-          phase === 'complete' && 'scale-95 opacity-50 transition-all duration-500'
-        )}>
-          
-          {/* Logo container with effects */}
-          <div className="relative group">
-            <div className="absolute inset-0 bg-black/20 rounded-full blur-3xl animate-pulse-glow" />
-            
-            <div className={cn(
-              'relative overflow-hidden rounded-2xl p-4 transition-all duration-500',
-              imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-            )}>
-              <img
-                src={logoSrc}
-                alt="Company Logo"
-                width={200}
-                height={80}
-                onLoad={handleImageLoad}
-                className="w-auto h-16 md:h-20 object-contain drop-shadow-2xl"
-              />
-              <div className="absolute inset-0 animate-shimmer pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Brand name / Tagline */}
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-              Multani Pansari
-            </h2>
-            <p className="text-sm text-gray-500 font-medium tracking-widest uppercase">
-              Loading Experience
-            </p>
-          </div>
-
-          {/* Progress section */}
-          <div className="w-64 md:w-80 space-y-3">
-            <div className="relative h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div className="absolute inset-0 bg-gray-100" />
-              <div
-                className="absolute inset-y-0 left-0 bg-black rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${progress}%` }}
-              >
-                <div className="absolute inset-0 animate-progress-shine bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center text-xs font-medium text-gray-400">
-              <span className={cn(
-                'transition-colors duration-300',
-                progress > 0 && 'text-gray-600'
-              )}>
-                Initializing
-              </span>
-              <span className={cn(
-                'tabular-nums transition-all duration-300',
-                progress === 100 ? 'text-green-600 font-bold' : 'text-gray-600'
-              )}>
-                {progress}%
-              </span>
-            </div>
-          </div>
-
-          {/* Loading dots */}
-          <div className="flex space-x-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={cn(
-                  'w-2 h-2 rounded-full bg-black transition-all duration-300',
-                  phase === 'loading' && 'animate-bounce'
-                )}
-                style={{
-                  animationDelay: `${i * 0.15}s`,
-                  opacity: phase === 'complete' ? 0.3 : 1,
-                  transform: phase === 'complete' ? 'scale(0.5)' : 'scale(1)'
-                }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom decorative line */}
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-100">
-          <div 
-            className="h-full bg-black transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-
-        {/* Corner accents */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-black/5 to-transparent" />
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-black/5 to-transparent" />
-      </div>
     </>
   );
 };

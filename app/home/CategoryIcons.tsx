@@ -137,7 +137,7 @@ const CategoryIcons = () => {
             onTouchMove={handleDragMove}
             onTouchEnd={handleDragEnd}
             onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            // onMouseLeave={handleMouseLeave}
           >
             {activeCategories.map((category) => (
               <Link

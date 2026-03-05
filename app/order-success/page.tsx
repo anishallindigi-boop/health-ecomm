@@ -53,7 +53,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 // Payment Method Icon
 const PaymentMethodIcon = ({ method }: { method: string }) => {
-  const icons: Record<string, JSX.Element> = {
+  const icons: Record<string, React.ReactNode> = {
     upi: <span className="text-xs font-bold text-blue-600">UPI</span>,
     card: <CreditCard className="w-4 h-4" />,
     netbanking: <span className="text-xs font-bold text-purple-600">NB</span>,

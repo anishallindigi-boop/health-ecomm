@@ -21,7 +21,7 @@ const ProductsSection = () => {
   const topRatedProducts = useMemo(() => {
     return products
       ?.filter((p) => p.topRated === true && p.status === 'published')
-      ?.slice(0, 8);
+      ?.slice(0, 50);
   }, [products]);
 
   if (loading) {

@@ -230,7 +230,7 @@ export default function HeaderImproved() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setShowSearchDropdown(true)}
-                className="w-full pl-10 pr-10 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className="w-full bg-primary text-gray-700 pl-10 pr-10 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
 
               {searchQuery && (
@@ -288,7 +288,7 @@ export default function HeaderImproved() {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate group-hover:text-primary transition-colors">
+                          <p className="text-sm font-medium text-gray-900 truncate">
                             {highlightMatch(product.name, searchQuery)}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
@@ -723,7 +723,7 @@ function highlightMatch(text: string, query: string) {
   
   return parts.map((part, index) => 
     part.toLowerCase() === query.toLowerCase() ? (
-      <span key={index} className="text-primary font-semibold bg-primary/10 rounded px-0.5">
+      <span key={index} className="text-gray-700 font-semibold bg-primary/10 rounded px-0.5">
         {part}
       </span>
     ) : (

@@ -1,5 +1,6 @@
+// app/checkout/page.tsx
 'use client';
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -35,6 +36,7 @@ import {
   Trash2,
   ShoppingBag,
   CreditCard,
+  AlertCircle,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { 
@@ -46,15 +48,28 @@ import {
 import { GetAllShipping } from "@/redux/slice/ShippingMethodSlice";
 import { 
   createOrder, 
-  initiatePayment,
+  initiateRazorpayPayment,
+  verifyRazorpayPayment,
   resetOrderState,
-  clearOrder 
+  clearOrder,
+  checkPaymentStatus
 } from "@/redux/slice/OrderSlice";
 import { applyCoupon, clearAppliedCoupon } from "@/redux/slice/CouponSlice";
 import { Order } from "@/redux/slice/OrderSlice";
 
 const IMAGE_URL = process.env.NEXT_PUBLIC_IMAGE_URL as string;
 const GST_RATE = 0.05; // 5% GST
+
+// Razorpay script loader
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -63,15 +78,14 @@ export default function CheckoutPage() {
   /* ---------------- LOADING STATES ---------------- */
   const [loadingItems, setLoadingItems] = useState<string[]>([]);
   const [loadingClear, setLoadingClear] = useState(false);
-
-  /* ---------------- PAYMENT STATE ---------------- */
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay');
 
   /* ---------------- CART DATA ---------------- */
   const rawCart = useAppSelector((s: any) => s.usercart.cart) as any[] | undefined;
 
   // Order state
-  const { loading: orderLoading, paymentUrl, sessionId, order: createdOrder } = useAppSelector(
+  const { loading: orderLoading, order: createdOrder, razorpayOrder, error } = useAppSelector(
     (s: any) => s.order
   );
 
@@ -82,16 +96,13 @@ export default function CheckoutPage() {
     dispatch(clearOrder());
   }, [dispatch]);
 
-  // Redirect to payment when payment URL is available
+  // Handle errors
   useEffect(() => {
-    if (paymentUrl && sessionId) {
-      if (createdOrder?._id) {
-        sessionStorage.setItem('pendingOrderId', createdOrder._id);
-        sessionStorage.setItem('paymentSessionId', sessionId);
-      }
-      window.location.href = paymentUrl;
+    if (error) {
+      toast.error(error);
+      setProcessingPayment(false);
     }
-  }, [paymentUrl, sessionId, createdOrder]);
+  }, [error]);
 
   const items = useMemo(() => {
     if (!rawCart || rawCart.length === 0) return [];
@@ -199,7 +210,7 @@ export default function CheckoutPage() {
   const shippingCost = selectedShipping?.price || 0;
 
   /* ---------------- TAX & TOTAL ---------------- */
-const tax = Number((subtotal * GST_RATE).toFixed(2));
+  const tax = Number((subtotal * GST_RATE).toFixed(2));
   const discountAmount = appliedCoupon?.discountAmount || 0;
   const total = Math.max(0, subtotal + tax + shippingCost - discountAmount);
   const totalItems = items.reduce((sum, item) => sum + item.qty, 0);
@@ -227,7 +238,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
       code: couponCode.trim(),
       cartTotal: subtotal,
       shippingCost: shippingCost,
-      productIds: productIds, // ⭐ SEND PRODUCT IDs
+      productIds: productIds,
     }));
     
     setApplyingCoupon(false);
@@ -309,7 +320,96 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
     return Object.keys(errors).length === 0;
   };
 
-  /* ---------------- PLACE ORDER & INITIATE PAYMENT ---------------- */
+  /* ---------------- RAZORPAY PAYMENT HANDLER ---------------- */
+  const handleRazorpayPayment = useCallback(async (order: Order, razorpayData: any) => {
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error("Failed to load Razorpay SDK");
+      }
+
+      const options = {
+        key: razorpayData.key,
+        amount: razorpayData.amount,
+        currency: razorpayData.currency,
+        name: "Your Store Name", // Update with your store name
+        description: `Order #${order.orderNumber}`,
+        image: "https://your-logo-url.com/logo.png", // Update with your logo
+        order_id: razorpayData.order_id,
+        handler: async (response: any) => {
+          try {
+            // Verify payment on backend
+            const verificationResult: any = await dispatch(verifyRazorpayPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId: order._id!,
+            }));
+
+            if (verifyRazorpayPayment.fulfilled.match(verificationResult)) {
+              // Clear cart and coupon
+              await dispatch(clearCart());
+              dispatch(clearAppliedCoupon());
+              
+              toast.success("Payment successful! Your order has been confirmed.");
+              
+              // Store order info in session storage
+              sessionStorage.setItem('lastOrder', JSON.stringify({
+                orderNumber: order.orderNumber,
+                orderId: order._id,
+                total: order.total,
+                paymentId: verificationResult.payload.data.razorpayPaymentId
+              }));
+              
+              // Redirect to order success page
+              router.push(`/order-success?order=${order.orderNumber}`);
+            } else {
+              throw new Error(verificationResult.payload || "Payment verification failed");
+            }
+          } catch (error: any) {
+            console.error("Payment verification error:", error);
+            toast.error(error.message || "Payment verification failed");
+            setProcessingPayment(false);
+          }
+        },
+        prefill: {
+          name: address.name,
+          email: address.email,
+          contact: address.phone,
+        },
+        notes: {
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+        },
+        theme: {
+          color: "#6366f1", // Your primary color
+        },
+        modal: {
+          ondismiss: () => {
+            setProcessingPayment(false);
+            toast.info("Payment cancelled");
+          },
+        },
+      };
+
+      const razorpay = new (window as any).Razorpay(options);
+      
+      razorpay.on('payment.failed', (response: any) => {
+        console.error("Payment failed:", response.error);
+        toast.error(`Payment failed: ${response.error.description}`);
+        setProcessingPayment(false);
+      });
+
+      razorpay.open();
+      
+    } catch (error: any) {
+      console.error("Razorpay error:", error);
+      toast.error(error.message || "Failed to initialize payment");
+      setProcessingPayment(false);
+    }
+  }, [address, dispatch, router]);
+
+  /* ---------------- PLACE ORDER & PAY ---------------- */
   const placeOrderAndPay = async () => {
     if (!validateForm()) {
       toast.error("Please fix the errors in the form");
@@ -321,7 +421,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
       return;
     }
 
-    // setProcessingPayment(true);
+    setProcessingPayment(true);
 
     try {
       const orderItems = items.map((item) => ({
@@ -363,41 +463,29 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
         total,
         notes: "",
         items: orderItems,
-        ipAddress: undefined,
         userAgent: navigator.userAgent,
         couponCode: appliedCoupon?.code || null,
       };
 
+      // Step 1: Create order
       const orderResult: any = await dispatch(createOrder(orderData));
 
-      if (createOrder.fulfilled.match(orderResult)) {
-        const createdOrder = orderResult.payload?.order;
-        const orderId = createdOrder?._id;
-        
-        router.push(`/orders?id=${orderId}`);
-        // if (!orderId) {
-        //   throw new Error("Order ID not received from server");
-        // }
-
-        // toast.info("Redirecting to payment gateway...");
-        
-        // const paymentResult: any = await dispatch(initiatePayment(orderId));
-
-        // if (initiatePayment.fulfilled.match(paymentResult)) {
-        //   await dispatch(clearCart());
-        //   dispatch(clearAppliedCoupon());
-          
-        //   sessionStorage.setItem('lastOrder', JSON.stringify({
-        //     orderNumber: createdOrder.orderNumber,
-        //     orderId: createdOrder._id,
-        //     total: createdOrder.total
-        //   }));
-        // } else {
-        //   throw new Error(paymentResult.payload || "Payment initiation failed");
-        // }
-      } else {
+      if (!createOrder.fulfilled.match(orderResult)) {
         throw new Error(orderResult.payload?.message || "Order creation failed");
       }
+
+      const createdOrder = orderResult.payload.order;
+      
+      // Step 2: Initiate Razorpay payment
+      const paymentResult: any = await dispatch(initiateRazorpayPayment(createdOrder._id!));
+
+      if (!initiateRazorpayPayment.fulfilled.match(paymentResult)) {
+        throw new Error(paymentResult.payload || "Payment initiation failed");
+      }
+
+      // Step 3: Open Razorpay checkout
+      await handleRazorpayPayment(createdOrder, paymentResult.payload.data);
+
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast.error(error.message || "Failed to process order");
@@ -405,21 +493,26 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
     }
   };
 
+  /* ---------------- CHECK PENDING PAYMENTS ---------------- */
   useEffect(() => {
-    const pendingOrderId = sessionStorage.getItem('pendingOrderId');
-    const paymentSessionId = sessionStorage.getItem('paymentSessionId');
-    
-    if (pendingOrderId && paymentSessionId) {
-      toast.info("You have a pending payment. Redirecting to payment...");
-      sessionStorage.removeItem('pendingOrderId');
-      sessionStorage.removeItem('paymentSessionId');
+    const lastOrder = sessionStorage.getItem('lastOrder');
+    if (lastOrder) {
+      try {
+        const orderData = JSON.parse(lastOrder);
+        if (orderData.orderNumber) {
+          // Check payment status
+          dispatch(checkPaymentStatus(orderData.orderNumber));
+        }
+      } catch (error) {
+        console.error("Error parsing lastOrder:", error);
+      }
     }
-  }, []);
+  }, [dispatch]);
 
   /* ---------------- EMPTY CART ---------------- */
   if (!items.length) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-8 px-4 ">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-8 px-4">
         <div className="text-center">
           <div className="w-48 h-48 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-6">
             <ShoppingBag className="w-24 h-24 text-primary/40" />
@@ -449,8 +542,8 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
 
   /* ---------------- MAIN UI ---------------- */
   return (
-    <div className="min-h-screen py-5">
-      <div className="max-w-7xl mx-auto px-4 ">
+    <div className="min-h-screen py-5 bg-background">
+      <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center justify-between mb-6">
@@ -491,7 +584,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
           </div>
         </div>
 
-     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Address, Shipping */}
           <div className="col-span-1 lg:col-span-2 space-y-8">
             {/* Cart Items with Quantity Controls */}
@@ -551,7 +644,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                             )}
 
                             <div className="flex items-baseline gap-2">
-                              <span className="text-xl font-bold text-muted-foreground">₹{item.price}</span>
+                              <span className="text-xl font-bold text-gray-900">₹{item.price}</span>
                               {item.originalPrice > item.price && (
                                 <span className="text-sm text-gray-400 line-through">
                                   ₹{item.originalPrice}
@@ -573,7 +666,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                               size="icon"
                               onClick={() => changeQty(item.cartId, item.qty - 1, item.stock)}
                               disabled={isLoading || item.qty <= 1}
-                              className="rounded-full w-8 h-8 border-gray-300 bg-background text-primary"
+                              className="rounded-full w-8 h-8 border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
                             >
                               <Minus className="w-4 h-4" />
                             </Button>
@@ -591,7 +684,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                               size="icon"
                               onClick={() => changeQty(item.cartId, item.qty + 1, item.stock)}
                               disabled={isLoading || isOutOfStock}
-                              className="rounded-full w-8 h-8 border-gray-300 hover:border-primary text-primary"
+                              className="rounded-full w-8 h-8 border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
                             >
                               <Plus className="w-4 h-4" />
                             </Button>
@@ -831,7 +924,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                         code: appliedCoupon.code,
                         cartTotal: subtotal,
                         shippingCost: method?.price || 0,
-                        productIds: productIds, // ⭐ SEND PRODUCT IDs
+                        productIds: productIds,
                       }));
                     }
                   }}
@@ -840,7 +933,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                   {shippingMethods.map((m: any) => (
                     <label
                       key={m._id}
-                      className={`className="flex flex-col lg:flex-row lg:items-center justify-between p-4 lg:p-6 border-2 rounded-xl cursor-pointer transition-all hover:border-primary hover:shadow-md border-primary bg-primary/5 shadow-md" ${
+                      className={`flex flex-col lg:flex-row lg:items-center justify-between p-4 lg:p-6 border-2 rounded-xl cursor-pointer transition-all ${
                         selectedShipping?._id === m._id 
                           ? 'border-primary bg-primary/5 shadow-md' 
                           : 'border-gray-200 hover:border-gray-300'
@@ -873,7 +966,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right mt-4 lg:mt-0">
                         <span className={`text-xl font-bold ${
                           m.price === 0 ? 'text-green-600' : 'text-gray-900'
                         }`}>
@@ -913,6 +1006,61 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                 </div>
               )}
             </Card>
+
+            {/* Payment Method Selection */}
+            <Card className="p-8 border-0 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50">
+                  <CreditCard className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Payment Method</h2>
+                  <p className="text-gray-600">Select how you'd like to pay</p>
+                </div>
+              </div>
+
+              <RadioGroup 
+                value={paymentMethod} 
+                onValueChange={(value: any) => setPaymentMethod(value)}
+                className="space-y-4"
+              >
+                <label
+                  className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                    paymentMethod === 'razorpay' 
+                      ? 'border-primary bg-primary/5 shadow-md' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <RadioGroupItem value="razorpay" className="h-5 w-5" />
+                  <div className="flex-1 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-lg bg-indigo-100">
+                        <CreditCard className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Razorpay</p>
+                        <p className="text-sm text-gray-600">Pay via UPI, Card, NetBanking, Wallet</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <img src="/razorpay-icon.svg" alt="Razorpay" className="h-6 w-auto" />
+                      <span className="text-xs text-gray-500">Secure</span>
+                    </div>
+                  </div>
+                </label>
+              </RadioGroup>
+
+              <div className="mt-6 p-4 bg-indigo-50 rounded-lg flex items-center gap-3">
+                <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                <div>
+                  <p className="text-sm font-medium text-indigo-700">100% Secure Payments</p>
+                  <p className="text-xs text-indigo-600">
+                    Your payment information is encrypted and processed securely by Razorpay.
+                    We never store your card details.
+                  </p>
+                </div>
+              </div>
+            </Card>
           </div>
 
           {/* Right: Order Summary */}
@@ -924,28 +1072,46 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
               </h2>
 
               {/* Order Items Summary (Compact) */}
-              <div className="space-y-3 mb-6 pr-1 sm:pr-2 max-h-48 overflow-y-auto">
-                {items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-15 h-15 rounded overflow-hidden border border-gray-200">
-                        <img
-                          src={`${item.image}`}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <span className="font-medium text-gray-900 line-clamp-1">
-                        {item.name}
-                      </span>
-                      <span className="text-gray-500">×{item.qty}</span>
-                    </div>
-                    <span className="font-semibold text-gray-900">
-                      ₹{item.price * item.qty}
-                    </span>
-                  </div>
-                ))}
-              </div>
+<div className="space-y-4 mb-6 max-h-56 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+  {items.map((item, idx) => (
+    <div 
+      key={idx} 
+      className="flex justify-between items-start gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+    >
+      {/* Left: Image + Details */}
+      <div className="flex items-start gap-3 flex-1 min-w-0">
+        <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+        
+        <div className="flex-1 min-w-0 pt-0.5">
+          <p className="font-medium text-gray-900 line-clamp-2 leading-snug text-[13px]">
+            {item.name}
+          </p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+              Qty: {item.qty}
+            </span>
+            <span className="text-xs text-gray-400">
+              ₹{item.price} each
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Price */}
+      <div className="text-right pt-0.5">
+        <span className="font-semibold text-gray-900 text-[13px]">
+          ₹{(item.price * item.qty).toLocaleString('en-IN')}
+        </span>
+      </div>
+    </div>
+  ))}
+</div>
 
               <Separator className="my-6" />
 
@@ -973,7 +1139,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                       <Button
                         onClick={handleApplyCoupon}
                         disabled={applyingCoupon || !couponCode.trim() || orderLoading || processingPayment}
-                        className="h-11 px-4 bg-background"
+                        className="h-11 px-4 bg-primary text-white hover:bg-primary/90"
                       >
                         {applyingCoupon ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1036,7 +1202,7 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                 <div className="flex justify-between text-lg">
                   <span className="text-gray-600 flex items-center gap-2">
                     <IndianRupee className="w-4 h-4" />
-                    GST (05%)
+                    GST (5%)
                   </span>
                   <span className="text-blue-600 font-semibold">+₹{tax}</span>
                 </div>
@@ -1088,20 +1254,21 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                 {/* Place Order & Pay Button */}
                 <Button
                   size="lg"
-                  className="w-full mt-8 !text-white h-14 text-lg font-semibold bg-background hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full mt-8 text-white h-14 text-lg font-semibold bg-background cursor-pointer transition-all duration-300"
                   onClick={placeOrderAndPay}
                   disabled={
                     orderLoading || 
                     shippingLoading || 
                     !selectedShipping ||
                     items.length === 0 ||
-                    processingPayment
+                    processingPayment ||
+                    paymentMethod !== 'razorpay'
                   }
                 >
                   {orderLoading || processingPayment ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {orderLoading ? 'Creating Order...' : 'Order Succesfully Created'}
+                      {orderLoading ? 'Creating Order...' : processingPayment ? 'Redirecting to Payment...' : ''}
                     </>
                   ) : !selectedShipping ? (
                     <>
@@ -1111,10 +1278,26 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                   ) : (
                     <>
                       <Lock className="w-5 h-5 mr-2" />
-                      Pay ₹{total}
+                      Pay ₹{total} with Razorpay
                     </>
                   )}
                 </Button>
+
+                {/* Payment Features */}
+                <div className="mt-6 grid grid-cols-3 gap-2 text-xs text-center">
+                  <div className="p-2">
+                    <CreditCard className="w-4 h-4 mx-auto mb-1 text-primary" />
+                    <p>Credit/Debit Card</p>
+                  </div>
+                  <div className="p-2">
+                    {/* <img src="/upi-icon.svg" alt="UPI" className="w-4 h-4 mx-auto mb-1" /> */}
+                    <p>UPI</p>
+                  </div>
+                  <div className="p-2">
+                    <Building className="w-4 h-4 mx-auto mb-1 text-primary" />
+                    <p>NetBanking</p>
+                  </div>
+                </div>
 
                 {/* Selected Shipping Summary */}
                 <div className="mt-4 space-y-2 text-xs text-gray-500">
@@ -1144,15 +1327,15 @@ const tax = Number((subtotal * GST_RATE).toFixed(2));
                 {/* Security Badges */}
                 <div className="mt-6 flex items-center justify-center gap-4 text-xs text-gray-500">
                   <div className="flex items-center gap-1">
-                    <ShieldCheck className="w-4 h-4" />
+                    <ShieldCheck className="w-4 h-4 text-green-600" />
                     SSL Secure
                   </div>
                   <div className="flex items-center gap-1">
-                    <Lock className="w-4 h-4" />
+                    <Lock className="w-4 h-4 text-green-600" />
                     Encrypted
                   </div>
                   <div className="flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
                     PCI DSS
                   </div>
                 </div>

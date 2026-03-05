@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Facebook, Twitter, Youtube, Linkedin, MapPin, Mail, Phone, Clock, Instagram, ArrowRight, CheckCircle } from 'lucide-react';
+import { Facebook, Twitter, Youtube, Linkedin, MapPin, Mail, Phone, Clock, Instagram, ArrowRight, CheckCircle, FacebookIcon, InstagramIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -66,6 +66,14 @@ export default function Footer() {
                 <Phone className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
                 <span>+91 9350755518</span>
               </div>
+                 <div className="flex items-start">
+                <Phone className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+                <span>+91 9896955518</span>
+              </div>
+                 <div className="flex items-start">
+                <Phone className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+                <span>+91 9068576896</span>
+              </div>
               {/* <div className="flex items-start">
                 <Clock className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
                 <span>10:00 AM - 07:00 PM</span>
@@ -122,6 +130,19 @@ export default function Footer() {
                   </div>
                 </form>
               )}
+
+<div className="flex items-center space-x-4 mt-10">
+
+  <Link href="https://www.instagram.com/multani_pansari_assandh?igsh=MWR2dnpqdTZudHByNw%3D%3D&utm_source=qr">
+  <InstagramIcon/>
+    
+  </Link>
+  <Link href="https://www.facebook.com/share/1AhgEduHUC/?mibextid=wwXIfr">
+  <FacebookIcon/>
+    
+  </Link>
+</div>
+              
 </div>
           </div>
         </div>

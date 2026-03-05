@@ -134,6 +134,11 @@ const StatusBadge = ({ status }: { status: string }) => {
       icon: RotateCcw,
       label: "Refunded"
     },
+    captured: {
+      color: "bg-green-100 text-green-800 border-green-200",
+      icon: CheckCircle2,
+      label: "captured"
+    },
        created: {
       color: "bg-green-100 text-green-800 border-green-200",
       icon: CheckCircle2,
@@ -176,10 +181,10 @@ const PaymentStatusBadge = ({ status }: { status: string }) => {
       icon: RefreshCw,
       label: "Processing"
     },
-    charged: {
+    captured: {
       color: "bg-green-100 text-green-800",
       icon: CheckCircle2,
-      label: "Paid"
+      label: "captured"
     },
     failed: {
       color: "bg-red-100 text-red-800",
@@ -567,28 +572,28 @@ const OrderDetailsDialog = ({ orderId, open, onClose }: { orderId: string; open:
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Method:</span>
                     <span className="font-medium capitalize">
-                      {order.payment?.method || 'Not specified'}
+                      {order.paymentId?.paymentMethod || 'Not specified'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Transaction ID:</span>
-                    <span className="font-medium font-mono text-sm">{order.payment?.txnId || 'N/A'}</span>
+                    <span className="text-gray-600">Rajorpay Order ID:</span>
+                    <span className="font-medium font-mono text-sm">{order.paymentId?.razorpayOrderId || 'N/A'}</span>
                   </div>
                   {order.payment?.gatewayReferenceId && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Gateway Ref:</span>
-                      <span className="font-medium font-mono text-sm">{order.payment.gatewayReferenceId}</span>
+                      <span className="font-medium font-mono text-sm">{order.paymentId?.razorpayOrderId}</span>
                     </div>
                   )}
                   {order.payment?.cardDetails && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Card:</span>
-                      <span className="font-medium">•••• {order.payment.cardDetails.last4}</span>
+                      <span className="font-medium">•••• {order.paymentId?.cardDetails?.last4}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                     <span className="text-gray-600">Payment Status:</span>
-                    <PaymentStatusBadge status={order.payment?.status || 'pending'} />
+                    <PaymentStatusBadge status={order.paymentId?.status} />
                   </div>
                 </div>
               </Card>
@@ -1185,10 +1190,10 @@ export default function AdminOrdersPage() {
                         <StatusBadge status={order.status} />
                       </TableCell>
                       <TableCell>
-                        <PaymentStatusBadge status={order.payment?.gatewayResponse?.status || 'pending'} />
+                      <StatusBadge status=   {order.paymentId?.status} /> 
                       </TableCell>
                          <TableCell>
-                       <StatusBadge status= {order.shiprocketDetails.status} />
+                       <StatusBadge status= {order.shiprocketDetails.paymentMethod} />
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

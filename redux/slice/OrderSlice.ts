@@ -1,3 +1,4 @@
+// redux/slice/OrderSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -27,38 +28,51 @@ export interface OrderItem {
   sku?: string;
 }
 
-export interface PaymentDetails {
+// Updated Payment Details for Razorpay
+export interface RazorpayPaymentDetails {
+  _id?: string;
+  razorpayOrderId: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  amount: number;
   status: 
     | 'pending'
     | 'initiated'
     | 'processing'
-    | 'charged'
-    | 'pending_vbv'
-    | 'authentication_failed'
-    | 'authorization_failed'
+    | 'authorized'
+    | 'captured'
     | 'failed'
     | 'refunded'
-    | 'partially_refunded';
-  method?: 'card' | 'netbanking' | 'upi' | 'wallet' | 'emi' | null;
-  sessionId?: string;
-  orderId?: string;
-  txnId?: string;
-  txnUuid?: string;
-  gatewayReferenceId?: string;
-  paymentUrl?: string;
+    | 'partial_refunded';
+  paymentMethod?: 'card' | 'netbanking' | 'upi' | 'wallet' | 'emi' | null;
+  paymentSubMethod?: string;
   cardDetails?: {
     last4?: string;
-    cardType?: string;
-    cardBrand?: string;
+    network?: string;
+    type?: string;
+    issuer?: string;
+    emi?: boolean;
   };
-  errorCode?: string;
-  errorMessage?: string;
+  upiDetails?: {
+    vpa?: string;
+    app?: string;
+  };
+  bankDetails?: {
+    name?: string;
+    ifsc?: string;
+  };
+  walletDetails?: {
+    name?: string;
+  };
+  capturedAt?: string;
+  refunds?: Array<{
+    refundId: string;
+    razorpayRefundId?: string;
+    amount: number;
+    reason?: string;
+    status: string;
+  }>;
   totalRefunded?: number;
-  initiatedAt?: string;
-  completedAt?: string;
-  failedAt?: string;
-  callbackReceived?: boolean;
-  callbackAt?: string;
 }
 
 export interface CouponDetails {
@@ -107,7 +121,7 @@ export interface Order {
   items: OrderItem[];
   couponCode?: string | null;
   couponDetails?: CouponDetails;
-  payment?: PaymentDetails;
+  paymentId?: string; // Reference to Payment schema
   shiprocketDetails?: ShiprocketDetails;
   trackingNumber?: string;
   trackingUrl?: string;
@@ -124,6 +138,12 @@ export interface Order {
   inventoryUpdated?: boolean;
   inventoryUpdatedAt?: string;
   canRetryShiprocket?: boolean;
+  
+  // For frontend use (populated from paymentId)
+  payment?: RazorpayPaymentDetails;
+  paymentStatus?: string;
+  paymentMethod?: string | null;
+  razorpayOrderId?: string;
 }
 
 export interface OrderStats {
@@ -132,12 +152,26 @@ export interface OrderStats {
   monthOrders: number;
   yearOrders: number;
   totalRevenue: number;
+  totalPayments: number;
   pendingOrders: number;
   deliveredOrders: number;
   cancelledOrders: number;
   paidOrders: number;
+  pendingPayments: number;
   shiprocketFailed: number;
   pendingShipments: number;
+}
+
+export interface RazorpayOrderResponse {
+  key: string;
+  order_id: string;
+  amount: number;
+  currency: string;
+  order: {
+    _id: string;
+    orderNumber: string;
+    total: number;
+  };
 }
 
 interface OrderState {
@@ -147,8 +181,7 @@ interface OrderState {
   loading: boolean;
   error: string | null;
   message: string | null;
-  paymentUrl: string | null;
-  sessionId: string | null;
+  razorpayOrder: RazorpayOrderResponse | null;
   // Polling for payment status
   isPolling: boolean;
 }
@@ -160,8 +193,7 @@ const initialState: OrderState = {
   loading: false,
   error: null,
   message: null,
-  paymentUrl: null,
-  sessionId: null,
+  razorpayOrder: null,
   isPolling: false,
 };
 
@@ -174,7 +206,7 @@ export const createOrder = createAsyncThunk<
   { rejectValue: string }
 >("order/create", async (payload, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`${API_URL}/api/orders`, payload, {
+    const res = await axios.post(`${API_URL}/api/orders/create`, payload, {
       withCredentials: true,
       headers: { "x-api-key": API_KEY },
     });
@@ -186,22 +218,19 @@ export const createOrder = createAsyncThunk<
   }
 });
 
-// ✅ Initiate Payment - POST /api/payments/initiate (NEW ROUTE)
-export const initiatePayment = createAsyncThunk<
+// ✅ Initiate Razorpay Payment - POST /api/orders/initiate-payment
+export const initiateRazorpayPayment = createAsyncThunk<
   { 
     success: boolean;
     message: string; 
-    paymentUrl: string; 
-    sessionId: string;
-    order: Order;
+    data: RazorpayOrderResponse;
   },
   string, // orderId
   { rejectValue: string }
->("order/initiatePayment", async (orderId, { rejectWithValue }) => {
+>("order/initiateRazorpayPayment", async (orderId, { rejectWithValue }) => {
   try {
-    // CHANGED: Now uses /api/payments/initiate instead of /api/orders/initiate-payment
     const res = await axios.post(
-      `${API_URL}/api/payments/initiate`,
+      `${API_URL}/api/orders/initiate-payment`,
       { orderId },
       {
         withCredentials: true,
@@ -209,17 +238,56 @@ export const initiatePayment = createAsyncThunk<
       }
     );
 
-    console.log(res.data);
+    console.log("Razorpay order created:", res.data);
     return res.data;
   } catch (err: any) {
-    console.log(err);
+    console.error("Payment initiation error:", err);
     return rejectWithValue(
       err.response?.data?.message || "Payment initiation failed"
     );
   }
 });
 
-// ✅ Check Payment Status - GET /api/payments/status/:orderNumber (NEW ROUTE)
+// ✅ Verify Razorpay Payment - POST /api/orders/verify-payment
+export const verifyRazorpayPayment = createAsyncThunk<
+  { 
+    success: boolean;
+    message: string;
+    data: {
+      orderNumber: string;
+      orderId: string;
+      paymentId: string;
+      razorpayPaymentId: string;
+      status: string;
+    };
+  },
+  {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    orderId: string;
+  },
+  { rejectValue: string }
+>("order/verifyRazorpayPayment", async (payload, { rejectWithValue }) => {
+  try {
+    const res = await axios.post(
+      `${API_URL}/api/orders/verify-payment`,
+      payload,
+      {
+        withCredentials: true,
+        headers: { "x-api-key": API_KEY },
+      }
+    );
+    return res.data;
+  } catch (err: any) {
+    console.error("Payment verification error:", err);
+    return rejectWithValue(
+      err.response?.data?.message || "Payment verification failed"
+    );
+  }
+});
+
+// ✅ Check Payment Status - GET /api/orders/payment-status/:orderNumber
 export const checkPaymentStatus = createAsyncThunk<
   { 
     success: boolean;
@@ -228,8 +296,8 @@ export const checkPaymentStatus = createAsyncThunk<
       orderNumber: string;
       status: string;
       paymentStatus: string;
-      total: number;
       paymentMethod?: string;
+      total: number;
       txnId?: string;
       shiprocketStatus?: string;
       trackingNumber?: string;
@@ -242,9 +310,8 @@ export const checkPaymentStatus = createAsyncThunk<
   { rejectValue: string }
 >("order/checkPaymentStatus", async (orderNumber, { rejectWithValue }) => {
   try {
-    // CHANGED: Now uses /api/payments/status/:orderNumber instead of /api/orders/payment-status/:orderNumber
     const res = await axios.get(
-      `${API_URL}/api/payments/status/${orderNumber}`,
+      `${API_URL}/api/orders/payment-status/${orderNumber}`,
       {
         withCredentials: true,
         headers: { "x-api-key": API_KEY },
@@ -357,9 +424,8 @@ export const getOrderByOrderNumber = createAsyncThunk<
   { rejectValue: string }
 >("order/getByOrderNumber", async (orderNumber, { rejectWithValue }) => {
   try {
-    // CHANGED: Route is now /by-number/:orderNumber (matching backend)
     const res = await axios.get(
-      `${API_URL}/api/orders/by-number/${orderNumber}`,
+      `${API_URL}/api/orders/track/${orderNumber}`,
       {
         withCredentials: true,
         headers: { "x-api-key": API_KEY },
@@ -380,7 +446,6 @@ export const getOrdersByCustomer = createAsyncThunk<
   { rejectValue: string }
 >("order/getByCustomer", async (_, { rejectWithValue }) => {
   try {
-    // CHANGED: Route is now /my-orders (matching backend)
     const res = await axios.get(`${API_URL}/api/orders/my-orders`, {
       withCredentials: true,
       headers: { "x-api-key": API_KEY },
@@ -446,16 +511,15 @@ export const cancelOrder = createAsyncThunk<
   }
 });
 
-// ✅ Initiate Refund (Admin) - POST /api/payments/refund/:id (NEW ROUTE)
+// ✅ Initiate Refund (Admin) - POST /api/orders/:id/refund
 export const initiateRefund = createAsyncThunk<
-  { success: boolean; message: string; refund: { id: string; amount: number; status: string } },
+  { success: boolean; message: string; data: { refundId: string; amount: number; status: string; orderNumber: string } },
   { id: string; amount?: number; reason?: string },
   { rejectValue: string }
 >("order/refund", async ({ id, amount, reason }, { rejectWithValue }) => {
   try {
-    // CHANGED: Now uses /api/payments/refund/:id instead of /api/orders/:id/refund
     const res = await axios.post(
-      `${API_URL}/api/payments/refund/${id}`,
+      `${API_URL}/api/orders/${id}/refund`,
       { amount, reason },
       {
         withCredentials: true,
@@ -466,6 +530,25 @@ export const initiateRefund = createAsyncThunk<
   } catch (err: any) {
     return rejectWithValue(
       err.response?.data?.message || "Refund failed"
+    );
+  }
+});
+
+// ✅ Get Payment by Order ID - GET /api/orders/payment/:orderId
+export const getPaymentByOrder = createAsyncThunk<
+  { success: boolean; payment: RazorpayPaymentDetails },
+  string,
+  { rejectValue: string }
+>("order/getPayment", async (orderId, { rejectWithValue }) => {
+  try {
+    const res = await axios.get(`${API_URL}/api/orders/payment/${orderId}`, {
+      withCredentials: true,
+      headers: { "x-api-key": API_KEY },
+    });
+    return res.data;
+  } catch (err: any) {
+    return rejectWithValue(
+      err.response?.data?.message || "Failed to fetch payment"
     );
   }
 });
@@ -521,8 +604,7 @@ export const OrderSlice = createSlice({
     resetOrderState: (state) => {
       state.error = null;
       state.message = null;
-      state.paymentUrl = null;
-      state.sessionId = null;
+      state.razorpayOrder = null;
       state.isPolling = false;
     },
     clearOrder: (state) => {
@@ -562,24 +644,52 @@ export const OrderSlice = createSlice({
       })
 
       /* ============================================ */
-      /* INITIATE PAYMENT */
+      /* INITIATE RAZORPAY PAYMENT */
       /* ============================================ */
-      .addCase(initiatePayment.pending, (state) => {
+      .addCase(initiateRazorpayPayment.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(initiatePayment.fulfilled, (state, action) => {
+      .addCase(initiateRazorpayPayment.fulfilled, (state, action) => {
         state.loading = false;
         state.message = action.payload.message;
-        state.paymentUrl = action.payload.paymentUrl;
-        state.sessionId = action.payload.sessionId;
-        if (action.payload.order) {
-          state.order = action.payload.order;
+        state.razorpayOrder = action.payload.data;
+        
+        // Update order with payment status
+        if (state.order) {
+          state.order.paymentStatus = 'initiated';
+          state.order.razorpayOrderId = action.payload.data.order_id;
         }
       })
-      .addCase(initiatePayment.rejected, (state, action) => {
+      .addCase(initiateRazorpayPayment.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Payment initiation failed";
+      })
+
+      /* ============================================ */
+      /* VERIFY RAZORPAY PAYMENT */
+      /* ============================================ */
+      .addCase(verifyRazorpayPayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyRazorpayPayment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message;
+        
+        // Update order with payment success
+        if (state.order && state.order.orderNumber === action.payload.data.orderNumber) {
+          state.order.paymentStatus = 'captured';
+          state.order.status = 'order_success';
+          if (state.order.payment) {
+            state.order.payment.status = 'captured';
+            state.order.payment.razorpayPaymentId = action.payload.data.razorpayPaymentId;
+          }
+        }
+      })
+      .addCase(verifyRazorpayPayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Payment verification failed";
       })
 
       /* ============================================ */
@@ -596,23 +706,41 @@ export const OrderSlice = createSlice({
           state.order = {
             ...state.order,
             status: action.payload.order.status as any,
-            payment: {
-              ...state.order.payment,
-              status: action.payload.order.paymentStatus as any,
-              txnId: action.payload.order.txnId,
-            },
-            shiprocketDetails: {
-              ...state.order.shiprocketDetails,
-              status: action.payload.order.shiprocketStatus as any,
-            },
+            paymentStatus: action.payload.order.paymentStatus,
+            paymentMethod: action.payload.order.paymentMethod,
             trackingNumber: action.payload.order.trackingNumber,
             trackingUrl: action.payload.order.trackingUrl,
           };
+          
+          if (state.order.payment) {
+            state.order.payment.status = action.payload.order.paymentStatus as any;
+          }
         }
       })
       .addCase(checkPaymentStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to check payment status";
+      })
+
+      /* ============================================ */
+      /* GET PAYMENT BY ORDER */
+      /* ============================================ */
+      .addCase(getPaymentByOrder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getPaymentByOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.order) {
+          state.order.payment = action.payload.payment;
+          state.order.paymentStatus = action.payload.payment.status;
+          state.order.paymentMethod = action.payload.payment.paymentMethod;
+          state.order.razorpayOrderId = action.payload.payment.razorpayOrderId;
+        }
+      })
+      .addCase(getPaymentByOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch payment";
       })
 
       /* ============================================ */
@@ -764,8 +892,10 @@ export const OrderSlice = createSlice({
         state.loading = false;
         state.message = action.payload.message;
         
-        // Note: Refund response structure changed - it returns refund object, not full order
-        // You may want to refresh the order to get updated refund status
+        // Refresh order to get updated refund status
+        if (state.order) {
+          // We'll need to fetch the order again to get updated payment
+        }
       })
       .addCase(initiateRefund.rejected, (state, action) => {
         state.loading = false;
@@ -783,6 +913,10 @@ export const OrderSlice = createSlice({
         state.loading = false;
         state.message = action.payload.message;
         state.orders = state.orders.filter((o) => o._id !== action.payload.id);
+        
+        if (state.order && state.order._id === action.payload.id) {
+          state.order = null;
+        }
       })
       .addCase(deleteOrder.rejected, (state, action) => {
         state.loading = false;

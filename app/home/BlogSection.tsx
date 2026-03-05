@@ -1,68 +1,148 @@
-import blog1 from "@/assets/blog-1.jpg";
-import blog2 from "@/assets/blog-2.jpg";
-import blog3 from "@/assets/blog-3.jpg";
+'use client';
 
-const blogs = [
-  {
-    image: '/blog-1.jpg',
-    title: "Piles के लिए आयुर्वेदिक समाधान Anti-Pi",
-    excerpt: "खून कम हो, आराम रहे — यही है असली piles relief. Piles (बवासीर) सिर्फ physical discomfort नहीं है —...",
-  },
-  {
-    image: '/blog-2.jpg',
-    title: "थकान नहीं, ताज़गी चाहिए?",
-    excerpt: "Ashva Kumari — हर महिला के हार्मोनल संतुलन का आयुर्वेदिक समाधान Hormonal imbalance एक ऐसी समस्या है जो नज़र...",
-  },
-  {
-    image: '/blog-3.jpg',
-    title: "Natural Energy, Clarity & Wellness",
-    excerpt: "शुद्ध शक्ति का सूत्र — बिना शुगर, बिना साइड इफेक्ट। हर दिन energy की कमी महसूस होना, काम में...",
-  },
-];
+import React, { useEffect, useState } from 'react';
+import { Clock } from 'lucide-react';
+import Link from 'next/link';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { RootState } from '@/redux/store';
+import { getAllBlogs } from '@/redux/slice/BlogSlice';
+import ApiLoader from '../elements/ApiLoader';
 
-const BlogSection = () => {
-  return (
-    <section className="py-20 bg-secondary">
-      <div className="container">
-        <p className="text-center text-primary font-body text-sm tracking-[0.3em] uppercase mb-2">
-          RECENT BLOGS
+const Page = () => {
+  const dispatch = useAppDispatch();
+  const { loading, error, blogs } = useAppSelector(
+    (state: RootState) => state.blog
+  );
+
+  // for per-card image loading skeleton
+  const [imageLoaded, setImageLoaded] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    dispatch(getAllBlogs());
+  }, [dispatch]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const handleImageLoad = (id: string) => {
+    setImageLoaded(prev => ({ ...prev, [id]: true }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] bg-black">
+        <ApiLoader />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] bg-black">
+        <p className="text-red-400 text-center text-sm md:text-base">
+          {error || 'Failed to load blogs. Please try again later.'}
         </p>
-        <h2 className="font-heading text-3xl md:text-4xl font-bold text-center text-foreground mb-10">
-          News & Blogs
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {blogs.map((b) => (
-            <div
-              key={b.title}
-              className="border border-border rounded-lg overflow-hidden bg-card group cursor-pointer"
-            >
-              <div className="aspect-video overflow-hidden">
-                <img
-                  src={b.image}
-                  alt={b.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
-              </div>
-              <div className="p-5">
-                <h3 className="font-heading text-lg font-semibold text-foreground mb-2 line-clamp-2">
-                  {b.title}
-                </h3>
-                <p className="font-body text-sm text-muted-foreground line-clamp-3">
-                  {b.excerpt}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="text-center">
-          <button className="bg-gold-gradient text-primary-foreground font-body font-semibold px-8 py-3 rounded tracking-wider uppercase text-sm hover:opacity-90 transition-opacity">
-            VIEW ALL
-          </button>
+      </div>
+    );
+  }
+
+  if (!blogs || blogs.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] bg-black">
+        <p className="text-gray-400 text-lg">No blogs found</p>
+      </div>
+    );
+  }
+
+  return (
+    <section className="py-16 md:py-20 bg-background min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Grid of blogs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          {blogs.map((blog: any, index: number) => {
+            const cardId = blog._id || blog.slug || `blog-${index}`;
+            const imgSrc =
+              blog?.image 
+                ? `${blog.image}`
+                : '/default.jpg';
+
+            return (
+              <Link
+                key={cardId}
+                href={`/blog/${blog?.slug}`}
+                className="group bg-zinc-900 rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-zinc-800/50 border border-zinc-800 hover:border-zinc-700 transition-all duration-300"
+                style={{ animationDelay: `${index * 0.08}s` }}
+              >
+                {/* Image block */}
+                <div className="relative h-48 md:h-56 overflow-hidden">
+                  {/* Skeleton shimmer */}
+                  {!imageLoaded[cardId] && (
+                    <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
+                  )}
+
+                  <img
+                    src={imgSrc}
+                    alt={blog?.title || 'Blog Image'}
+                    onLoad={() => handleImageLoad(cardId)}
+                    className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
+                      imageLoaded[cardId] ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </div>
+
+                {/* Content block */}
+                <div className="p-6">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <span className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full text-xs font-semibold border border-zinc-700">
+                      {blog?.category?.length
+                        ? blog.category
+                            .map((cat: any) => cat.name)
+                            .join(', ')
+                        : 'Uncategorized'}
+                    </span>
+                  </div>
+
+                  <h3 className="text-base md:text-lg font-bold text-white mb-2 group-hover:text-zinc-300 transition-colors duration-300 line-clamp-2">
+                    {blog?.title || 'Untitled Blog'}
+                  </h3>
+
+                  <p className="text-zinc-400 mb-4 text-sm line-clamp-3">
+                    {blog?.excerpt || 'Read more about this update.'}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-medium text-zinc-300">
+                        {blog?.author?.name || 'Unknown Author'}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-xs text-zinc-500">
+                      <div className="flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatDate(blog?.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 };
 
-export default BlogSection;
+export default Page;

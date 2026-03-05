@@ -18,12 +18,7 @@ const BestsellersSecton = () => {
     }
   }, [dispatch, fetched]);
 
-  // 🏆 only top selling products
-  const topSellingProducts = useMemo(() => {
-    return products
-      ?.filter((p) => p.topSelling === true && p.status === 'published')
-      ?.slice(0, 8);
-  }, [products]);
+
 
   if (loading) {
     return (
@@ -35,7 +30,7 @@ const BestsellersSecton = () => {
     );
   }
 
-  if (!topSellingProducts?.length) return null;
+  if (!products?.length) return null;
 
   return (
     <section className="py-16 bg-background container">
@@ -48,7 +43,7 @@ const BestsellersSecton = () => {
      
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {topSellingProducts.map((product) => (
+        {products.map((product) => (
           <ProductCard
             key={product._id}
             image={product.mainImage || product.image || '/placeholder.jpg'}

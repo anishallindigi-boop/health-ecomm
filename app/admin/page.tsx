@@ -148,13 +148,14 @@ const generateCategoryData = (products: any[]) => {
     value
   }));
 };
+
 const AdminDashboard = () => {
 
   const router=useRouter();
   const dispatch = useAppDispatch();
   const { user, loading: authLoading } = useAppSelector((state: RootState) => state.auth);
   const { orders, loading: ordersLoading, error } = useAppSelector((state: RootState) => state.order);
-  const { products } = useAppSelector((state: RootState) => state.product);
+  const { products, loading: productsLoading } = useAppSelector((state: RootState) => state.product);
   
   // Generate chart data from real data
   const salesData = generateMonthlySalesData(orders);
@@ -182,28 +183,28 @@ const AdminDashboard = () => {
       title: 'Total Products', 
       value: totalProducts.toString(),
       icon: Package, 
-      change: `${Math.round((publishedProducts / totalProducts) * 100)}%`, 
+      change: `${totalProducts > 0 ? Math.round((publishedProducts / totalProducts) * 100) : 0}%`, 
       trend: 'up' 
     },
     { 
       title: 'Total Orders', 
       value: totalOrders.toString(), 
       icon: ShoppingCart, 
-      // change: totalOrders > 0 ? `${Math.round((completedOrders / totalOrders) * 100)}%` : '0%', 
+      change: totalOrders > 0 ? 'Active' : 'No orders', 
       trend: 'up' 
     },
     { 
       title: 'Revenue', 
       value: formatCurrency(totalRevenue), 
       icon: Wallet, 
-      change: '0%', // You can calculate this based on previous period
+      change: 'Total revenue',
       trend: 'up' 
     },
     { 
       title: 'Out of Stock', 
       value: outOfStockProducts.toString(), 
       icon: ChartCandlestick, 
-      change: '0%', 
+      change: `${totalProducts > 0 ? Math.round((outOfStockProducts / totalProducts) * 100) : 0}% of products`, 
       trend: outOfStockProducts > 0 ? 'up' : 'down' 
     },
   ];
@@ -211,7 +212,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     // Fetch data when component mounts
     const fetchData = async () => {
+      setIsLoading(true);
       try {
+        // Fetch both orders and products
         await Promise.all([
           // dispatch(getAllOrders()).unwrap(),
           dispatch(getProducts()).unwrap()
@@ -246,7 +249,7 @@ const AdminDashboard = () => {
       .substring(0, 2);
   };
 
-  if (isLoading) {
+  if (isLoading || ordersLoading || productsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -256,14 +259,8 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      
-
       {/* Main Content */}
       <div className="">
-        {/* Top Navigation */}
-        
-
         {/* Main Content */}
         <main className="p-4 sm:p-6 lg:p-8">
           {/* Stats Cards */}
@@ -281,7 +278,7 @@ const AdminDashboard = () => {
                         ) : (
                           <TrendingUp className="h-4 w-4 mr-1 transform rotate-180" />
                         )}
-                        <span>{stat.change} from last month</span>
+                        <span>{stat.change}</span>
                       </div>
                     </div>
                     <div className="p-3 rounded-full bg-primary/10">
@@ -302,11 +299,6 @@ const AdminDashboard = () => {
                   <div>
                     <CardTitle>Revenue & Orders Overview</CardTitle>
                     <CardDescription>Monthly performance metrics</CardDescription>
-                  </div>
-                  <div className="flex space-x-2">
-                    {/* <Button variant="outline" size="sm">Week</Button>
-                    <Button variant="outline" size="sm">Month</Button>
-                    <Button size="sm">Year</Button> */}
                   </div>
                 </div>
               </CardHeader>
@@ -347,8 +339,6 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-
-           
           </div>
 
           {/* Products Table */}
@@ -357,7 +347,7 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Recent Products</CardTitle>
-                  <CardDescription>Recently added products</CardDescription>
+                  <CardDescription>Recently added products ({products.length} total)</CardDescription>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => router.push('/admin/product')}>View All</Button>
               </div>
@@ -374,40 +364,84 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.slice(0, 5).map((product) => (
-                    <TableRow key={product._id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center space-x-2">
-                          {product.mainImage && (
-                            <img 
-                              src={product.mainImage}
-                              alt={product.name}
-                              className="h-10 w-10 rounded-md object-cover"
-                            />
-                          )}
-                          <span>{product.name}</span>
+                  {productsLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        <div className="flex justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                         </div>
                       </TableCell>
-                      <TableCell>{formatCurrency(parseFloat(product.price || '0'))}</TableCell>
-                      <TableCell>{product.stock || '0'}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          className={`px-3 py-1 rounded-full text-xs ${
-                            product.status === 'published' 
-                              ? 'bg-green-500 text-white' 
-                              : 'bg-gray-400 text-white'
-                          }`}
-                        >
-                          {product.status === 'published' ? 'Published' : 'Draft'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/product/${product._id}`)}>View</Button>
+                    </TableRow>
+                  ) : products.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                        No products found
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    products.slice(0, 5).map((product) => (
+                      <TableRow key={product._id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center space-x-2">
+                            {product.mainImage && (
+                              <img 
+                                src={product.mainImage}
+                                alt={product.name}
+                                className="h-10 w-10 rounded-md object-cover"
+                              />
+                            )}
+                            <span className="font-medium">{product.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatCurrency(parseFloat(product.price || '0'))}</TableCell>
+                        <TableCell>
+                          <Badge variant={parseInt(product.stock || '0') > 0 ? "default" : "destructive"} className={parseInt(product.stock || '0') > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                            {product.stock || '0'} units
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={`px-3 py-1 rounded-full text-xs ${
+                              product.status === 'published' 
+                                ? 'bg-green-500 text-white' 
+                                : 'bg-gray-400 text-white'
+                            }`}
+                          >
+                            {product.status === 'published' ? 'Published' : 'Draft'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/product/${product._id}`)} className='cursor-pointer'>
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
+              
+              {/* Quick Stats about products */}
+              {products.length > 0 && (
+                <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-gray-500">Published</p>
+                    <p className="font-semibold">{publishedProducts}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-gray-500">Out of Stock</p>
+                    <p className="font-semibold text-red-600">{outOfStockProducts}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-gray-500">Avg Price</p>
+                    <p className="font-semibold">
+                      {formatCurrency(
+                        products.reduce((acc, p) => acc + parseFloat(p.price || '0'), 0) / products.length
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

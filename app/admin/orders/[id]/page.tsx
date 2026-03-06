@@ -43,15 +43,15 @@ import {
 // Company details
 const COMPANY_DETAILS = {
   name: "Multani Pansari",
-  address: "house no - 1, sadar bazar, shankar bhawan, karnal, haryana, 132001",
+  address: "Opp Main Gate Of Gurudwara main Bazaz Assandh",
   city: "Karnal",
   state: "Haryana",
-  pincode: "132001",
+  pincode: "132039",
   country: "India",
-  phone: "+91 ",
-  email: "@gmail.com",
-  website: "",
-  gstin: "06CGJPJ3628L1Z4",
+  phone: "+91 9068576896 ",
+  email: "multanipansari@gmail.com",
+  website: "https://www.multanipansari.com/",
+  gstin: "06CVYPK1418H3Z8",
   // pan: "ABCDE1234F",
   // cin: "U12345MH2020PTC123456",
   // signature: "/signature.png",
@@ -515,11 +515,11 @@ export default function InvoicePage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-600">Method:</p>
-                    <p className="text-sm font-semibold capitalize text-gray-900">{order.payment?.gatewayResponse?.payment_method_type || 'Not specified'}</p>
+                    <p className="text-sm font-semibold capitalize text-gray-900">{order.paymentId?.paymentMethod || 'Not specified'}</p>
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-600">Transaction ID:</p>
-                    <p className="text-sm font-mono font-semibold text-gray-900">{order.payment?.txnId || 'N/A'}</p>
+                    <p className="text-sm font-mono font-semibold text-gray-900">{order.paymentId?.razorpayOrderId || 'N/A'}</p>
                   </div>
                   {/* {order.payment?.gatewayResponse && (
                     <div className="flex items-center justify-between">
@@ -530,8 +530,8 @@ export default function InvoicePage() {
                   <div className="flex items-center justify-between pt-2 border-t border-emerald-200">
                     <p className="text-sm text-gray-600">Paid On:</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {order.payment?.initiatedAt 
-                        ? new Date(order.payment.initiatedAt).toLocaleDateString('en-IN', {
+                      {order.paymentId?.completedAt 
+                        ? new Date(order.paymentId.completedAt).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
@@ -618,7 +618,7 @@ export default function InvoicePage() {
                         <span className="font-medium text-gray-900">{item.quantity}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-bold text-primary">₹{item.price * item.quantity}</span>
+                        <span className="font-bold text-gray-700">₹{item.price * item.quantity}</span>
                       </td>
                     </tr>
                   ))}
@@ -745,7 +745,7 @@ export default function InvoicePage() {
                   <Separator className="my-3" />
                   <div className="flex justify-between text-base font-bold">
                     <span className="text-gray-900">Total Amount:</span>
-                    <span className="text-primary text-xl">₹{total.toLocaleString()}</span>
+                    <span className="text-gray-700 text-xl">₹{total.toLocaleString()}</span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <p className="text-xs text-gray-500 uppercase tracking-wider">Amount in words:</p>

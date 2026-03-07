@@ -9,6 +9,7 @@ import { Provider } from 'react-redux';
 import LayoutWrapper from "./LayoutWrapper";
 import AuthProvider from "./providers/AuthProvider";
 import { Toaster } from "sonner";
+import WhatsAppButton from "./elements/Whatsappbutton";
 
 
 // export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({
         <LayoutWrapper>
             <AuthProvider>
           {children}
+          <WhatsAppButton/>
            <Toaster richColors position="top-right" />
           </AuthProvider>
         </LayoutWrapper>

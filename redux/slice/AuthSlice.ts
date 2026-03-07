@@ -90,7 +90,7 @@ export const sendOTP = createAsyncThunk<
 
 // 3. Verify OTP (login)
 export const verifyotp = createAsyncThunk<
-  { message: string; user: Auth },
+  { message: string; user: Auth,token: string },
   { phone: string; otp: string },
   { rejectValue: string }
 >("auth/verifyotp", async ({ phone, otp }, { rejectWithValue }) => {

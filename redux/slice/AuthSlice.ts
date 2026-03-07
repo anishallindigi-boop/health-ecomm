@@ -294,6 +294,7 @@ export const AuthSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
         state.loading = false;
+        state.token = null;  // ✅ clear from Redux state
       state.message = action.payload.message;
         state.fetched = false;
           if (typeof window !== 'undefined') {

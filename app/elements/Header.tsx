@@ -687,14 +687,7 @@ export default function HeaderImproved() {
                     <Phone size={20} className="text-gray-400" />
                     <span>Contact</span>
                   </Link>
-                  <Link href="/enquiry-form" onClick={() => setShowProfile(false)} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl">
-                    <Package size={20} className="text-gray-400" />
-                    <span>Bulk Enquiry</span>
-                  </Link>
-                  <Link href="/styling-consultation-form" onClick={() => setShowProfile(false)} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl">
-                    <Sparkles size={20} className="text-gray-400" />
-                    <span>Book Consultation</span>
-                  </Link>
+
                 </div>
 
                 <button

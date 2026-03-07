@@ -147,12 +147,10 @@ export const logoutuser = createAsyncThunk<
   { rejectValue: string }
 >("auth/logout", async (_, { rejectWithValue }) => {
   try {
-    const res = await axios.post(
+    const res = await axiosInstance.post(
       `${API_URL}/api/auth/logout`,
       {},
-      { withCredentials: true ,
-          headers: { "x-api-key": API_KEY },
-      }
+     
     );
     return res.data;
   } catch (err: any) {

@@ -46,7 +46,9 @@ const initialState: AuthState = {
   message: null,
   isAuthenticated: false,
   isRegistered: false,
-  token: null,
+   token: typeof window !== 'undefined' 
+    ? sessionStorage.getItem('auth_token') 
+    : null,
   isOTPSent: false,
   isOTPVerified: false,
   authLoading: false,
@@ -237,6 +239,9 @@ export const AuthSlice = createSlice({
     state.token = action.payload.token;  
   state.isOTPVerified = true;
       state.fetched = true;
+        if (typeof window !== 'undefined') {
+    sessionStorage.setItem('auth_token', action.payload.token);
+  }
 })
 
       .addCase(verifyotp.rejected, (state, action) => {
@@ -256,6 +261,13 @@ export const AuthSlice = createSlice({
         state.user = action.payload;
         state.isAuthenticated = true;
             state.fetched = true;
+
+  // ✅ Restore token from sessionStorage if Redux lost it (page refresh)
+  if (!state.token && typeof window !== 'undefined') {
+    const saved = sessionStorage.getItem('auth_token');
+    if (saved) state.token = saved;
+  }
+
       })
       .addCase(getuser.rejected, (state, action) => {
         state.loading = false;
@@ -289,6 +301,9 @@ export const AuthSlice = createSlice({
         state.loading = false;
       state.message = action.payload.message;
         state.fetched = false;
+          if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('auth_token');
+  }
     });
   },
 });

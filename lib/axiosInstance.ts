@@ -11,7 +11,9 @@ const axiosInstance = axios.create({
 
 // ✅ Attach token from Redux state on every request
 axiosInstance.interceptors.request.use((config) => {
-  const token = store.getState().auth.token;
+  const token = store.getState().auth.token 
+    || sessionStorage.getItem('auth_token');
+    
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

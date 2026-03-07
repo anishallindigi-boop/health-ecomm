@@ -51,7 +51,7 @@ export const getCartItems = createAsyncThunk(
         withCredentials: true, // important for reading user session
       };
 
-      const res = await axios.get(`${API_URL}/api/cart/get`, config);
+      const res = await axiosInstance.get(`${API_URL}/api/cart/get`);
 
       
 
@@ -104,10 +104,10 @@ export const updateCartQuantity = createAsyncThunk(
         headers: { 'x-api-key': API_KEY },
         withCredentials: true,
       };
-      const { data } = await axios.put(
+      const { data } = await axiosInstance.put(
         `${API_URL}/api/cart/update/${cartId}`,
         { quantity },
-        config
+        
       );
       return data; // <-- controller must return fresh cart[]
     } catch (err: any) {
@@ -125,9 +125,9 @@ export const removeCartItem = createAsyncThunk(
         headers: { 'x-api-key': API_KEY },
         withCredentials: true,
       };
-      const { data } = await axios.delete(
+      const { data } = await axiosInstance.delete(
         `${API_URL}/api/cart/remove/${cartItemId}`,
-        config
+      
       );
       return data; // <-- controller must return fresh cart[]
     } catch (err: any) {
@@ -146,7 +146,7 @@ export const clearCart = createAsyncThunk(
         withCredentials: true,
       };
       // hit the endpoint you already created
-      const { data } = await axios.delete(`${API_URL}/api/cart/clear`, config);
+      const { data } = await axiosInstance.delete(`${API_URL}/api/cart/clear`);
       return data; // <-- should be []
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || 'Clear failed');

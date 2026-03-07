@@ -1,4 +1,5 @@
 // redux/slice/OrderSlice.ts
+import axiosInstance from "@/lib/axiosInstance";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -206,10 +207,8 @@ export const createOrder = createAsyncThunk<
   { rejectValue: string }
 >("order/create", async (payload, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`${API_URL}/api/orders/create`, payload, {
-      withCredentials: true,
-      headers: { "x-api-key": API_KEY },
-    });
+    const res = await axiosInstance.post(`${API_URL}/api/orders/create`, payload
+    );
     return res.data;
   } catch (err: any) {
     return rejectWithValue(
@@ -229,13 +228,10 @@ export const initiateRazorpayPayment = createAsyncThunk<
   { rejectValue: string }
 >("order/initiateRazorpayPayment", async (orderId, { rejectWithValue }) => {
   try {
-    const res = await axios.post(
+    const res = await axiosInstance.post(
       `${API_URL}/api/orders/initiate-payment`,
       { orderId },
-      {
-        withCredentials: true,
-        headers: { "x-api-key": API_KEY },
-      }
+      
     );
 
     console.log("Razorpay order created:", res.data);
@@ -270,13 +266,10 @@ export const verifyRazorpayPayment = createAsyncThunk<
   { rejectValue: string }
 >("order/verifyRazorpayPayment", async (payload, { rejectWithValue }) => {
   try {
-    const res = await axios.post(
+    const res = await axiosInstance.post(
       `${API_URL}/api/orders/verify-payment`,
       payload,
-      {
-        withCredentials: true,
-        headers: { "x-api-key": API_KEY },
-      }
+   
     );
     return res.data;
   } catch (err: any) {
@@ -310,12 +303,9 @@ export const checkPaymentStatus = createAsyncThunk<
   { rejectValue: string }
 >("order/checkPaymentStatus", async (orderNumber, { rejectWithValue }) => {
   try {
-    const res = await axios.get(
+    const res = await axiosInstance.get(
       `${API_URL}/api/orders/payment-status/${orderNumber}`,
-      {
-        withCredentials: true,
-        headers: { "x-api-key": API_KEY },
-      }
+      
     );
     return res.data;
   } catch (err: any) {
@@ -364,12 +354,9 @@ export const getAllOrders = createAsyncThunk<
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
-    const res = await axios.get(
+    const res = await axiosInstance.get(
       `${API_URL}/api/orders?${queryParams.toString()}`,
-      {
-        withCredentials: true,
-        headers: { "x-api-key": API_KEY },
-      }
+     
     );
     return res.data;
   } catch (err: any) {
@@ -386,10 +373,7 @@ export const getOrderStats = createAsyncThunk<
   { rejectValue: string }
 >("order/getStats", async (_, { rejectWithValue }) => {
   try {
-    const res = await axios.get(`${API_URL}/api/orders/stats`, {
-      withCredentials: true,
-      headers: { "x-api-key": API_KEY },
-    });
+    const res = await axiosInstance.get(`${API_URL}/api/orders/stats`);
     return res.data;
   } catch (err: any) {
     return rejectWithValue(
@@ -405,10 +389,7 @@ export const getOrderById = createAsyncThunk<
   { rejectValue: string }
 >("order/getById", async (id, { rejectWithValue }) => {
   try {
-    const res = await axios.get(`${API_URL}/api/orders/${id}`, {
-      withCredentials: true,
-      headers: { "x-api-key": API_KEY },
-    });
+    const res = await axiosInstance.get(`${API_URL}/api/orders/${id}`);
     return res.data;
   } catch (err: any) {
     return rejectWithValue(
@@ -424,12 +405,9 @@ export const getOrderByOrderNumber = createAsyncThunk<
   { rejectValue: string }
 >("order/getByOrderNumber", async (orderNumber, { rejectWithValue }) => {
   try {
-    const res = await axios.get(
+    const res = await axiosInstance.get(
       `${API_URL}/api/orders/track/${orderNumber}`,
-      {
-        withCredentials: true,
-        headers: { "x-api-key": API_KEY },
-      }
+
     );
     return res.data;
   } catch (err: any) {
@@ -446,10 +424,7 @@ export const getOrdersByCustomer = createAsyncThunk<
   { rejectValue: string }
 >("order/getByCustomer", async (_, { rejectWithValue }) => {
   try {
-    const res = await axios.get(`${API_URL}/api/orders/my-orders`, {
-      withCredentials: true,
-      headers: { "x-api-key": API_KEY },
-    });
+    const res = await axiosInstance.get(`${API_URL}/api/orders/my-orders`);
     return res.data;
   } catch (err: any) {
     return rejectWithValue(

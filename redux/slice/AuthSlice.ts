@@ -1,3 +1,4 @@
+import axiosInstance from "@/lib/axiosInstance";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -31,6 +32,7 @@ interface AuthState {
   message: string | null;
   isAuthenticated: boolean;
   isRegistered: boolean;
+  token: string | null;  // ✅ Add this
   isOTPSent: boolean;
   isOTPVerified: boolean;
   authLoading: boolean;
@@ -44,6 +46,7 @@ const initialState: AuthState = {
   message: null,
   isAuthenticated: false,
   isRegistered: false,
+  token: null,
   isOTPSent: false,
   isOTPVerified: false,
   authLoading: false,
@@ -111,10 +114,8 @@ export const getuser = createAsyncThunk<Auth, void, { rejectValue: string }>(
   "auth/getuser",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/profile`, {
-        withCredentials: true,
-        headers: { "x-api-key": API_KEY },
-      });
+      const res = await axiosInstance.get(`${API_URL}/api/auth/profile`);
+      console.log(res.data,"data")
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || "Failed to load user");
@@ -171,6 +172,7 @@ export const AuthSlice = createSlice({
       state.isRegistered = false;
       state.isOTPSent = false;
       state.isOTPVerified = false;
+      state.token = null;
     },
       resetFetched: (state) => {
       state.fetched = false;
@@ -232,6 +234,7 @@ export const AuthSlice = createSlice({
   state.message = action.payload.message;
   state.user = action.payload.user;      // ✅ ADD THIS
   state.isAuthenticated = true;
+    state.token = action.payload.token;  
   state.isOTPVerified = true;
       state.fetched = true;
 })

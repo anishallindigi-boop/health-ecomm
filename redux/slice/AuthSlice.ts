@@ -133,10 +133,7 @@ export const updateprofile = createAsyncThunk<
 >("auth/updateprofile", async (payload, { rejectWithValue }) => {
   try {
     // console.log(payload,"data")
-    const res = await axios.put(`${API_URL}/api/auth/update/profile`, payload, {
-      withCredentials: true,
-      headers: { "x-api-key": API_KEY },
-    });
+    const res = await axiosInstance.put(`${API_URL}/api/auth/update/profile`, payload);
     return res.data;
   } catch (err: any) {
     return rejectWithValue(err.response?.data?.error || "Failed to update profile");

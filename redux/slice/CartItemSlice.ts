@@ -1,3 +1,4 @@
+import axiosInstance from '@/lib/axiosInstance';
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -81,12 +82,12 @@ export const addToCart = createAsyncThunk(
       },
       withCredentials: true,
     };
-      const res = await axios.post(`${API_URL}/api/cart/add`, {
+      const res = await axiosInstance.post(`${API_URL}/api/cart/add`, {
   
         productId,
         quantity,
         productvariationid
-      },config);
+      });
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Cannot add to cart");

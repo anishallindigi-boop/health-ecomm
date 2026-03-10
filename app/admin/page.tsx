@@ -243,7 +243,14 @@ const AdminDashboard = () => {
       try {
         // Fetch both orders and products
         await Promise.all([
-          dispatch(getAllOrders()).unwrap(),
+         dispatch(getAllOrders({ 
+            page: 1,
+            limit: 100, // Get enough orders for meaningful analytics
+            sortBy: 'createdAt',
+            sortOrder: 'desc'
+            // You can add additional filters if needed:
+            // paymentStatus: 'captured', // Uncomment if you want to filter by payment status
+          })).unwrap(),
           dispatch(getProducts()).unwrap()
         ]);
       } catch (error) {

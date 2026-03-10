@@ -68,7 +68,6 @@ import {
 } from 'recharts';
 import { useRouter } from 'next/navigation';
 
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Format currency in INR
@@ -98,21 +97,44 @@ const getStatusVariant = (status: string) => {
   }
 };
 
+// Check if payment is captured (successful)
+const isPaymentCaptured = (order: any) => {
+  // Check different possible payment status fields
+  const paymentStatus = order.paymentStatus?.toLowerCase() || '';
+  const orderStatus = order.status?.toLowerCase() || '';
+  const paymentIntent = order.paymentIntent;
+  
+  return (
+    paymentStatus === 'captured' || 
+    paymentStatus === 'succeeded' || 
+    paymentStatus === 'completed' ||
+    paymentStatus === 'paid' ||
+    orderStatus === 'completed' ||
+    orderStatus === 'delivered' ||
+    orderStatus === 'order success' ||
+    (paymentIntent && paymentIntent.status === 'succeeded') ||
+    order.paymentCaptured === true
+  );
+};
+
 // Chart colors
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-// Helper function to generate monthly sales data
+// Helper function to generate monthly sales data (only for captured payments)
 const generateMonthlySalesData = (orders: any[] = []) => {
   const now = new Date();
   const months = [];
+  
+  // Filter only orders with captured payments
+  const capturedOrders = orders.filter(order => isPaymentCaptured(order));
   
   // Get last 6 months
   for (let i = 5; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthName = format(date, 'MMM');
     
-    // Filter orders for this month
-    const monthOrders = orders.filter(order => {
+    // Filter captured orders for this month
+    const monthOrders = capturedOrders.filter(order => {
       const orderDate = new Date(order.createdAt || 0);
       return (
         orderDate.getMonth() === date.getMonth() &&
@@ -150,25 +172,30 @@ const generateCategoryData = (products: any[]) => {
 };
 
 const AdminDashboard = () => {
-
-  const router=useRouter();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, loading: authLoading } = useAppSelector((state: RootState) => state.auth);
   const { orders, loading: ordersLoading, error } = useAppSelector((state: RootState) => state.order);
   const { products, loading: productsLoading } = useAppSelector((state: RootState) => state.product);
   
-  // Generate chart data from real data
+  // Generate chart data from real data (only captured payments)
   const salesData = generateMonthlySalesData(orders);
   const categoryData = generateCategoryData(products);
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Calculate dashboard stats from orders
-  const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+  // Calculate dashboard stats
+  // Only include captured payments in revenue calculation
+  const capturedOrders = orders.filter(order => isPaymentCaptured(order));
+  const totalRevenue = capturedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+  
+  // All orders count (for total orders)
   const totalOrders = orders.length;
-  // const completedOrders = orders.filter(order => order.status === 'completed').length;
-  // const pendingOrders = orders.filter(order => order.status === 'pending').length;
+  
+  // Payment stats
+  const pendingPayments = orders.filter(order => !isPaymentCaptured(order) && order.status?.toLowerCase() !== 'cancelled').length;
+  const cancelledOrders = orders.filter(order => order.status?.toLowerCase() === 'cancelled').length;
   
   // Calculate product stats
   const totalProducts = products.length;
@@ -183,29 +210,29 @@ const AdminDashboard = () => {
       title: 'Total Products', 
       value: totalProducts.toString(),
       icon: Package, 
-      change: `${totalProducts > 0 ? Math.round((publishedProducts / totalProducts) * 100) : 0}%`, 
-      trend: 'up' 
+      change: `${totalProducts > 0 ? Math.round((publishedProducts / totalProducts) * 100) : 0}% Published`, 
+      trend: 'up' as const
     },
     { 
       title: 'Total Orders', 
       value: totalOrders.toString(), 
       icon: ShoppingCart, 
-      change: totalOrders > 0 ? 'Active' : 'No orders', 
-      trend: 'up' 
+      change: `${capturedOrders.length} Completed · ${pendingPayments} Pending`, 
+      trend: 'up' as const
     },
     { 
-      title: 'Revenue', 
+      title: 'Revenue (Captured)', 
       value: formatCurrency(totalRevenue), 
       icon: Wallet, 
-      change: 'Total revenue',
-      trend: 'up' 
+      change: `From ${capturedOrders.length} successful payments`,
+      trend: 'up' as const
     },
     { 
       title: 'Out of Stock', 
       value: outOfStockProducts.toString(), 
       icon: ChartCandlestick, 
       change: `${totalProducts > 0 ? Math.round((outOfStockProducts / totalProducts) * 100) : 0}% of products`, 
-      trend: outOfStockProducts > 0 ? 'up' : 'down' 
+      trend: outOfStockProducts > 0 ? 'up' as const : 'down' as const
     },
   ];
 
@@ -216,7 +243,7 @@ const AdminDashboard = () => {
       try {
         // Fetch both orders and products
         await Promise.all([
-          // dispatch(getAllOrders()).unwrap(),
+          dispatch(getAllOrders()).unwrap(),
           dispatch(getProducts()).unwrap()
         ]);
       } catch (error) {
@@ -266,19 +293,23 @@ const AdminDashboard = () => {
           {/* Stats Cards */}
           <div className="grid grid-cols-1 gap-5 mt-6 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat, index) => (
-              <Card key={index} className="overflow-hidden">
+              <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">{stat.title}</p>
                       <p className="mt-1 text-2xl font-semibold">{stat.value}</p>
-                      <div className={`mt-2 flex items-center text-sm ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`mt-2 flex items-center text-sm ${
+                        stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                      }`}>
                         {stat.trend === 'up' ? (
                           <TrendingUp className="h-4 w-4 mr-1" />
                         ) : (
                           <TrendingUp className="h-4 w-4 mr-1 transform rotate-180" />
                         )}
-                        <span>{stat.change}</span>
+                        <span className="truncate max-w-[150px]" title={stat.change}>
+                          {stat.change}
+                        </span>
                       </div>
                     </div>
                     <div className="p-3 rounded-full bg-primary/10">
@@ -298,8 +329,14 @@ const AdminDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Revenue & Orders Overview</CardTitle>
-                    <CardDescription>Monthly performance metrics</CardDescription>
+                    <CardDescription>
+                      Monthly performance metrics (captured payments only)
+                    </CardDescription>
                   </div>
+                  <Badge variant="outline" className="bg-green-50">
+                    <Wallet className="h-3 w-3 mr-1" />
+                    Captured Payments
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -314,9 +351,12 @@ const AdminDashboard = () => {
                       <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
                       <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                       <Tooltip 
-                        formatter={(value: any, name: any) => 
-                          name === 'revenue' ? [formatCurrency(Number(value)), 'Revenue'] : [value, 'Orders']
-                        }
+                        formatter={(value: any, name: any) => {
+                          if (name === 'revenue') {
+                            return [formatCurrency(Number(value)), 'Revenue (Captured)'];
+                          }
+                          return [value, 'Orders (Captured)'];
+                        }}
                       />
                       <Legend />
                       <Line
@@ -326,6 +366,7 @@ const AdminDashboard = () => {
                         name="Revenue"
                         stroke="#8884d8"
                         activeDot={{ r: 8 }}
+                        strokeWidth={2}
                       />
                       <Line
                         yAxisId="right"
@@ -333,6 +374,7 @@ const AdminDashboard = () => {
                         dataKey="orders"
                         name="Orders"
                         stroke="#82ca9d"
+                        strokeWidth={2}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -349,7 +391,9 @@ const AdminDashboard = () => {
                   <CardTitle>Recent Products</CardTitle>
                   <CardDescription>Recently added products ({products.length} total)</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => router.push('/admin/product')}>View All</Button>
+                <Button variant="outline" size="sm" onClick={() => router.push('/admin/product')}>
+                  View All
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -395,7 +439,10 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>{formatCurrency(parseFloat(product.price || '0'))}</TableCell>
                         <TableCell>
-                          <Badge variant={parseInt(product.stock || '0') > 0 ? "default" : "destructive"} className={parseInt(product.stock || '0') > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                          <Badge 
+                            variant={parseInt(product.stock || '0') > 0 ? "default" : "destructive"} 
+                            className={parseInt(product.stock || '0') > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
+                          >
                             {product.stock || '0'} units
                           </Badge>
                         </TableCell>
@@ -411,7 +458,12 @@ const AdminDashboard = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/product/${product._id}`)} className='cursor-pointer'>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => router.push(`/admin/product/${product._id}`)} 
+                            className='cursor-pointer'
+                          >
                             View
                           </Button>
                         </TableCell>
@@ -451,9 +503,16 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Recent Orders</CardTitle>
-                  <CardDescription>Latest transactions from your store</CardDescription>
+                  <CardDescription>
+                    Latest transactions from your store
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({capturedOrders.length} captured payments)
+                    </span>
+                  </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => router.push(`/admin/orders`)} className='cursor-pointer'>View All</Button>
+                <Button variant="outline" size="sm" onClick={() => router.push(`/admin/orders`)} className='cursor-pointer'>
+                  View All
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -464,6 +523,7 @@ const AdminDashboard = () => {
                     <TableHead>Customer</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Payment</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
@@ -471,7 +531,7 @@ const AdminDashboard = () => {
                 <TableBody>
                   {ordersLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={7} className="text-center py-8">
                         <div className="flex justify-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                         </div>
@@ -479,38 +539,55 @@ const AdminDashboard = () => {
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-red-500">
+                      <TableCell colSpan={7} className="text-center py-8 text-red-500">
                         Error loading orders: {error}
                       </TableCell>
                     </TableRow>
                   ) : orders.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                         No orders found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    orders.slice(0, 5).map((order) => (
-                      <TableRow key={order._id}>
-                        <TableCell className="font-medium">{order.orderNumber || 'N/A'}</TableCell>
-                        <TableCell>{order.customerName || 'N/A'}</TableCell>
-                        <TableCell>{formatOrderDate(order.createdAt)}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={getStatusVariant(order.status).variant as any}
-                            className={getStatusVariant(order.status).className}
-                          >
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(order.total || 0)}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/orders/${order._id}`)} className='cursor-pointer'>View</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    orders.slice(0, 5).map((order) => {
+                      const paymentCaptured = isPaymentCaptured(order);
+                      return (
+                        <TableRow key={order._id}>
+                          <TableCell className="font-medium">{order.orderNumber || 'N/A'}</TableCell>
+                          <TableCell>{order.customerName || 'N/A'}</TableCell>
+                          <TableCell>{formatOrderDate(order.createdAt)}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={getStatusVariant(order.status).variant as any}
+                              className={getStatusVariant(order.status).className}
+                            >
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              className={paymentCaptured ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}
+                            >
+                              {paymentCaptured ? 'Captured' : 'Pending'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(order.total || 0)}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => router.push(`/admin/orders/${order._id}`)} 
+                              className='cursor-pointer'
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

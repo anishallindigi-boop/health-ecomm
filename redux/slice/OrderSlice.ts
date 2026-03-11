@@ -185,6 +185,12 @@ interface OrderState {
   razorpayOrder: RazorpayOrderResponse | null;
   // Polling for payment status
   isPolling: boolean;
+   pagination: {        // ← add this
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 const initialState: OrderState = {
@@ -196,6 +202,12 @@ const initialState: OrderState = {
   message: null,
   razorpayOrder: null,
   isPolling: false,
+   pagination: {        // ← add this
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  },
 };
 
 /* ---------------- ASYNC ACTIONS ---------------- */
@@ -728,6 +740,7 @@ export const OrderSlice = createSlice({
       .addCase(getAllOrders.fulfilled, (state, action) => {
         state.loading = false;
         state.orders = action.payload.orders;
+        state.pagination = action.payload.pagination; 
       })
       .addCase(getAllOrders.rejected, (state, action) => {
         state.loading = false;

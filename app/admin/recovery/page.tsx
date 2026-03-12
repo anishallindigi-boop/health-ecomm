@@ -3,38 +3,68 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-// Types
+// Types - Updated to match actual API response
+interface DatabaseInfo {
+  paymentId: string;
+  paymentStatus: string;
+  orderStatus: string;
+  hasPaymentResponse: boolean;
+  razorpayPaymentId: string | null;
+  razorpayOrderId: string;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface RazorpayPaymentDetails {
+  id: string;
+  status: string;
+  method: string;
+  amount: number;
+  currency: string;
+  captured: boolean;
+  email: string;
+  contact: string;
+  description: string;
+  order_id: string;
+  created_at: number;
+  fee?: number;
+  tax?: number;
+  card?: any;
+  upi?: {
+    vpa: string;
+    flow: string;
+    payer_account_type: string;
+  };
+  wallet?: any;
+  bank?: any;
+  error_code?: string | null;
+  error_description?: string | null;
+  notes?: Record<string, string>;
+}
+
+interface RazorpayInfo {
+  current: RazorpayPaymentDetails | null;
+  allPayments: RazorpayPaymentDetails[];
+  error: string | null;
+  isCaptured: boolean;
+}
+
+interface DiagnosisInfo {
+  needsFix: boolean;
+  message: string;
+  recoveryCommand: string | null;
+}
+
+interface DebugResponseData {
+  database: DatabaseInfo;
+  razorpay: RazorpayInfo;
+  diagnosis: DiagnosisInfo;
+}
+
 interface DebugResponse {
   success: boolean;
-  data: {
-    database: {
-      paymentId: string;
-      paymentStatus: string;
-      orderStatus: string;
-      hasPaymentResponse: boolean;
-      razorpayPaymentId: string | null;
-      razorpayOrderId: string;
-      amount: number;
-      createdAt: string;
-      updatedAt: string;
-    };
-    razorpay: {
-      id: string;
-      status: string;
-      method: string;
-      amount: number;
-      card?: any;
-      upi?: any;
-      wallet?: any;
-      bank?: any;
-      error?: string;
-    } | null;
-    diagnosis: {
-      needsFix: boolean;
-      message: string;
-      recoveryCommand: string | null;
-    };
-  };
+  data: DebugResponseData;
 }
 
 interface ApiResponse {
@@ -103,6 +133,18 @@ const PaymentRecovery: React.FC = () => {
     return null;
   };
 
+  // Format amount from paise to rupees
+  const formatAmount = (paise: number | undefined): string => {
+    if (!paise) return '₹0.00';
+    return `₹${(paise / 100).toFixed(2)}`;
+  };
+
+  // Format Unix timestamp to readable date
+  const formatUnixDate = (timestamp: number | undefined): string => {
+    if (!timestamp) return 'N/A';
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
   // Handle single order debug
   const handleDebugOrder = async (): Promise<void> => {
     if (!orderNumber) {
@@ -126,9 +168,8 @@ const PaymentRecovery: React.FC = () => {
       });
       
       setDebugInfo(res.data);
-    //   console.log('Debug response:', res.data);
+      console.log('Debug response:', res.data);
     } catch (error: any) {
-    //   console.error('Debug error:', error);
       alert(`Error: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
@@ -167,7 +208,6 @@ const PaymentRecovery: React.FC = () => {
       
       alert(`✅ ${res.data.message}`);
     } catch (error: any) {
-    //   console.error('Force fix error:', error);
       alert(`Error: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
@@ -210,19 +250,37 @@ const PaymentRecovery: React.FC = () => {
           withCredentials: true
         }
       );
-      
+
       setResults(res.data.data);
     } catch (error: any) {
-    //   console.error('Bulk recovery error:', error);
       alert(`Error: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // Format date
+  // Format date from ISO string
   const formatDate = (dateString: string): string => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString();
+  };
+
+  // Get status color
+  const getStatusColor = (status: string): string => {
+    switch (status?.toLowerCase()) {
+      case 'captured':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'authorized':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'pending':
+      case 'initiated':
+      case 'processing':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
   };
 
   return (
@@ -278,7 +336,7 @@ const PaymentRecovery: React.FC = () => {
                     type="text"
                     value={orderNumber}
                     onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
-                    placeholder="e.g., ORD-20260311-6220CX86"
+                    placeholder="e.g., ORD-20260311-89759WZU"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -302,8 +360,12 @@ const PaymentRecovery: React.FC = () => {
                   </button>
                   <button
                     onClick={handleForceFix}
-                    disabled={loading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center transition-colors"
+                    disabled={loading || !debugInfo?.data?.diagnosis?.needsFix}
+                    className={`px-6 py-2 rounded-lg disabled:opacity-50 flex items-center transition-colors ${
+                      debugInfo?.data?.diagnosis?.needsFix
+                        ? 'bg-red-600 text-white hover:bg-red-700'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
                   >
                     {loading ? (
                       <>
@@ -314,7 +376,7 @@ const PaymentRecovery: React.FC = () => {
                         Fixing...
                       </>
                     ) : (
-                      '🛠️ Force Fix'
+                      debugInfo?.data?.diagnosis?.needsFix ? '🚨 Force Fix' : '🛠️ Force Fix'
                     )}
                   </button>
                 </div>
@@ -330,128 +392,260 @@ const PaymentRecovery: React.FC = () => {
                 <div className="p-6">
                   {/* Diagnosis Badge */}
                   {debugInfo.data.diagnosis && (
-                    <div className={`mb-4 p-4 rounded-lg ${
+                    <div className={`mb-6 p-4 rounded-lg border-2 ${
                       debugInfo.data.diagnosis.needsFix 
-                        ? 'bg-yellow-50 border border-yellow-200' 
+                        ? 'bg-yellow-50 border-yellow-400' 
                         : debugInfo.data.database?.paymentStatus === 'captured'
-                        ? 'bg-green-50 border border-green-200'
-                        : 'bg-gray-50 border border-gray-200'
+                        ? 'bg-green-50 border-green-400'
+                        : 'bg-gray-50 border-gray-300'
                     }`}>
-                      <div className="flex items-center">
-                        <span className="text-2xl mr-3">
+                      <div className="flex items-start">
+                        <span className="text-3xl mr-3">
                           {debugInfo.data.diagnosis.needsFix ? '⚠️' : 
                            debugInfo.data.database?.paymentStatus === 'captured' ? '✅' : 'ℹ️'}
                         </span>
-                        <div>
-                          <p className="font-medium">
+                        <div className="flex-1">
+                          <p className="font-bold text-lg mb-1">
                             {debugInfo.data.diagnosis.message}
                           </p>
-                          {debugInfo.data.diagnosis.recoveryCommand && (
-                            <p className="text-sm text-gray-600 mt-1">
-                              Run: <code className="bg-gray-100 px-2 py-1 rounded">{debugInfo.data.diagnosis.recoveryCommand}</code>
-                            </p>
+                          {debugInfo.data.diagnosis.needsFix && (
+                            <div className="mt-2 p-3 bg-white rounded border border-yellow-300">
+                              <p className="text-sm text-gray-700 mb-1">Recovery Command:</p>
+                              <code className="bg-gray-800 text-green-400 px-3 py-2 rounded block text-sm font-mono">
+                                {debugInfo.data.diagnosis.recoveryCommand}
+                              </code>
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Database State */}
-                  <div className="mb-6">
-                    <h4 className="font-medium text-gray-700 mb-3">Database State</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Payment Status</p>
-                        <p className={`text-lg font-semibold ${
-                          debugInfo.data.database?.paymentStatus === 'captured' 
-                            ? 'text-green-600' 
-                            : 'text-yellow-600'
-                        }`}>
-                          {debugInfo.data.database?.paymentStatus || 'N/A'}
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Order Status</p>
-                        <p className="text-lg font-semibold">{debugInfo.data.database?.orderStatus || 'N/A'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Has Payment Response</p>
-                        <p className="text-lg font-semibold">
-                          {debugInfo.data.database?.hasPaymentResponse ? '✅ Yes' : '❌ No'}
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Amount</p>
-                        <p className="text-lg font-semibold">₹{debugInfo.data.database?.amount || 0}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Payment IDs */}
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Razorpay Order ID</p>
-                        <p className="text-sm font-mono">{debugInfo.data.database?.razorpayOrderId || 'N/A'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Razorpay Payment ID</p>
-                        <p className="text-sm font-mono">{debugInfo.data.database?.razorpayPaymentId || 'N/A'}</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Database State */}
+                    <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                      <h4 className="font-bold text-gray-800 mb-4 flex items-center text-lg">
+                        <span className="mr-2">🗄️</span> Database State
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Payment Status</p>
+                            <p className={`text-lg font-bold ${
+                              debugInfo.data.database?.paymentStatus === 'captured' ? 'text-green-600' : 'text-yellow-600'
+                            }`}>
+                              {debugInfo.data.database?.paymentStatus || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Order Status</p>
+                            <p className="text-lg font-bold text-gray-800">
+                              {debugInfo.data.database?.orderStatus || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Amount (DB)</p>
+                            <p className="text-lg font-bold text-gray-800">
+                              ₹{debugInfo.data.database?.amount?.toFixed(2) || '0.00'}
+                            </p>
+                          </div>
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Has Response</p>
+                            <p className="text-lg font-bold">
+                              {debugInfo.data.database?.hasPaymentResponse ? 
+                                <span className="text-green-600">✅ Yes</span> : 
+                                <span className="text-red-600">❌ No</span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-white p-3 rounded shadow-sm">
+                          <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Payment ID</p>
+                          <p className="text-sm font-mono text-gray-700 break-all">{debugInfo.data.database?.paymentId || 'N/A'}</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2">
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Razorpay Order ID</p>
+                            <p className="text-sm font-mono text-blue-600">{debugInfo.data.database?.razorpayOrderId || 'N/A'}</p>
+                          </div>
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Razorpay Payment ID</p>
+                            <p className="text-sm font-mono text-blue-600">{debugInfo.data.database?.razorpayPaymentId || 'N/A'}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Created</p>
+                            <p className="text-xs text-gray-700">{formatDate(debugInfo.data.database?.createdAt)}</p>
+                          </div>
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Updated</p>
+                            <p className="text-xs text-gray-700">{formatDate(debugInfo.data.database?.updatedAt)}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Timestamps */}
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Created At</p>
-                        <p className="text-sm">{formatDate(debugInfo.data.database?.createdAt)}</p>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-sm text-gray-500">Updated At</p>
-                        <p className="text-sm">{formatDate(debugInfo.data.database?.updatedAt)}</p>
-                      </div>
+                    {/* Razorpay State */}
+                    <div className="bg-blue-50 rounded-lg p-5 border border-blue-200">
+                      <h4 className="font-bold text-gray-800 mb-4 flex items-center text-lg">
+                        <span className="mr-2">⚡</span> Razorpay State
+                      </h4>
+
+                      {debugInfo.data.razorpay?.error ? (
+                        <div className="bg-red-50 border border-red-200 p-4 rounded-lg text-red-700">
+                          <p className="font-semibold">❌ Error fetching from Razorpay:</p>
+                          <p className="text-sm mt-1">{debugInfo.data.razorpay.error}</p>
+                        </div>
+                      ) : debugInfo.data.razorpay?.current ? (
+                        <div className="space-y-4">
+                          {/* Status Badge */}
+                          <div className={`p-3 rounded-lg border-2 ${getStatusColor(debugInfo.data.razorpay.current.status)}`}>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-semibold uppercase">Razorpay Status</span>
+                              <span className="text-xl font-bold">{debugInfo.data.razorpay.current.status}</span>
+                            </div>
+                            {debugInfo.data.razorpay.isCaptured && (
+                              <p className="text-xs mt-1 opacity-75">✅ Payment is captured in Razorpay</p>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white p-3 rounded shadow-sm">
+                              <p className="text-xs text-gray-500 uppercase font-semibold">Method</p>
+                              <p className="text-lg font-bold text-gray-800 capitalize">
+                                {debugInfo.data.razorpay.current.method || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="bg-white p-3 rounded shadow-sm">
+                              <p className="text-xs text-gray-500 uppercase font-semibold">Amount</p>
+                              <p className="text-lg font-bold text-gray-800">
+                                {formatAmount(debugInfo.data.razorpay.current.amount)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Razorpay Payment ID</p>
+                            <p className="text-sm font-mono text-blue-600">{debugInfo.data.razorpay.current.id}</p>
+                          </div>
+
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Customer</p>
+                            <p className="text-sm text-gray-800">{debugInfo.data.razorpay.current.email}</p>
+                            <p className="text-sm text-gray-600">{debugInfo.data.razorpay.current.contact}</p>
+                          </div>
+
+                          {/* Payment Method Details */}
+                          {debugInfo.data.razorpay.current.upi && (
+                            <div className="bg-purple-50 p-3 rounded border border-purple-200">
+                              <p className="text-xs text-purple-600 uppercase font-semibold mb-1">UPI Details</p>
+                              <p className="text-sm font-mono text-gray-800">{debugInfo.data.razorpay.current.upi.vpa}</p>
+                              <p className="text-xs text-gray-600">Flow: {debugInfo.data.razorpay.current.upi.flow}</p>
+                            </div>
+                          )}
+
+                          {debugInfo.data.razorpay.current.card && (
+                            <div className="bg-indigo-50 p-3 rounded border border-indigo-200">
+                              <p className="text-xs text-indigo-600 uppercase font-semibold mb-1">Card Details</p>
+                              <p className="text-sm text-gray-800">
+                                {debugInfo.data.razorpay.current.card.network} **** {debugInfo.data.razorpay.current.card.last4}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white p-3 rounded shadow-sm">
+                              <p className="text-xs text-gray-500 uppercase font-semibold">Fee</p>
+                              <p className="text-sm font-bold text-gray-800">
+                                {formatAmount(debugInfo.data.razorpay.current.fee)}
+                              </p>
+                            </div>
+                            <div className="bg-white p-3 rounded shadow-sm">
+                              <p className="text-xs text-gray-500 uppercase font-semibold">Tax</p>
+                              <p className="text-sm font-bold text-gray-800">
+                                {formatAmount(debugInfo.data.razorpay.current.tax)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-3 rounded shadow-sm">
+                            <p className="text-xs text-gray-500 uppercase font-semibold">Created At (Razorpay)</p>
+                            <p className="text-sm text-gray-700">{formatUnixDate(debugInfo.data.razorpay.current.created_at)}</p>
+                          </div>
+
+                          {/* Error Info if any */}
+                          {debugInfo.data.razorpay.current.error_code && (
+                            <div className="bg-red-50 border border-red-200 p-3 rounded">
+                              <p className="text-xs text-red-600 uppercase font-semibold">Error</p>
+                              <p className="text-sm text-red-700">{debugInfo.data.razorpay.current.error_description}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 italic">No Razorpay data available</p>
+                      )}
                     </div>
                   </div>
 
-                  {/* Razorpay State */}
-                  <div className="mb-6">
-                    <h4 className="font-medium text-gray-700 mb-3">Razorpay State</h4>
-                    {debugInfo.data.razorpay?.error ? (
-                      <div className="bg-red-50 p-4 rounded-lg text-red-700">
-                        {debugInfo.data.razorpay.error}
+                  {/* All Payments Section */}
+                  {debugInfo.data.razorpay?.allPayments && debugInfo.data.razorpay.allPayments.length > 0 && (
+                    <div className="mt-6 bg-gray-50 rounded-lg p-5 border border-gray-200">
+                      <h4 className="font-bold text-gray-800 mb-4">
+                        All Payments ({debugInfo.data.razorpay.allPayments.length})
+                      </h4>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Captured</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {debugInfo.data.razorpay.allPayments.map((payment, idx) => (
+                              <tr key={idx} className="hover:bg-gray-50">
+                                <td className="px-4 py-2 text-xs font-mono text-gray-900">{payment.id}</td>
+                                <td className="px-4 py-2">
+                                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                    payment.status === 'captured' ? 'bg-green-100 text-green-800' : 
+                                    payment.status === 'failed' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {payment.status}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-700 capitalize">{payment.method}</td>
+                                <td className="px-4 py-2 text-sm text-gray-700">{formatAmount(payment.amount)}</td>
+                                <td className="px-4 py-2">
+                                  {payment.captured ? 
+                                    <span className="text-green-600">✅</span> : 
+                                    <span className="text-red-600">❌</span>}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    ) : debugInfo.data.razorpay ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 p-3 rounded">
-                          <p className="text-sm text-gray-500">Status</p>
-                          <p className={`text-lg font-semibold ${
-                            debugInfo.data.razorpay?.status === 'captured' 
-                              ? 'text-green-600' 
-                              : 'text-yellow-600'
-                          }`}>
-                            {debugInfo.data.razorpay?.status || 'N/A'}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <p className="text-sm text-gray-500">Payment Method</p>
-                          <p className="text-lg font-semibold">{debugInfo.data.razorpay?.method || 'N/A'}</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <p className="text-sm text-gray-500">Amount</p>
-                          <p className="text-lg font-semibold">
-                            ₹{debugInfo.data.razorpay?.amount ? debugInfo.data.razorpay.amount / 100 : 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">No Razorpay data available</p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Raw Data Accordion */}
-                  <details className="mt-4">
-                    <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-900">
+                  <details className="mt-6 group">
+                    <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-900 font-medium p-3 bg-gray-100 rounded-lg transition-colors">
+                      <span className="group-open:rotate-90 inline-block transition-transform mr-2">▶</span>
                       View Raw Response Data
                     </summary>
-                    <pre className="mt-2 p-4 bg-gray-50 rounded-lg overflow-auto text-xs max-h-96">
+                    <pre className="mt-2 p-4 bg-gray-900 rounded-lg overflow-auto text-xs max-h-96 text-green-400 font-mono">
                       {JSON.stringify(debugInfo, null, 2)}
                     </pre>
                   </details>
@@ -461,21 +655,28 @@ const PaymentRecovery: React.FC = () => {
 
             {/* API Response */}
             {apiResponse && (
-              <div className={`rounded-lg p-4 ${
+              <div className={`rounded-lg p-4 border-2 ${
                 apiResponse.success 
-                  ? 'bg-green-50 border border-green-200' 
-                  : 'bg-red-50 border border-red-200'
+                  ? 'bg-green-50 border-green-400' 
+                  : 'bg-red-50 border-red-400'
               }`}>
-                <h4 className={`font-medium mb-2 ${
+                <h4 className={`font-bold mb-2 ${
                   apiResponse.success ? 'text-green-800' : 'text-red-800'
                 }`}>
                   {apiResponse.success ? '✅ Recovery Result' : '❌ Error'}
                 </h4>
-                <pre className={`text-sm overflow-auto ${
+                <p className={`text-sm mb-2 ${
                   apiResponse.success ? 'text-green-700' : 'text-red-700'
                 }`}>
-                  {JSON.stringify(apiResponse, null, 2)}
-                </pre>
+                  {apiResponse.message}
+                </p>
+                {apiResponse.data && (
+                  <pre className={`text-xs overflow-auto p-2 rounded ${
+                    apiResponse.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {JSON.stringify(apiResponse.data, null, 2)}
+                  </pre>
+                )}
               </div>
             )}
           </div>
@@ -522,7 +723,7 @@ const PaymentRecovery: React.FC = () => {
                             ...selectedStatuses,
                             [status]: e.target.checked
                           })}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                         />
                         <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
                       </label>
@@ -535,7 +736,7 @@ const PaymentRecovery: React.FC = () => {
                 <button
                   onClick={handleBulkRecovery}
                   disabled={loading}
-                  className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center transition-colors"
+                  className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center transition-colors font-semibold"
                 >
                   {loading ? (
                     <>
@@ -561,49 +762,53 @@ const PaymentRecovery: React.FC = () => {
                 
                 {/* Stats Cards */}
                 <div className="p-6 grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-blue-600">Total Processed</p>
-                    <p className="text-2xl font-bold text-blue-700">{results.total}</p>
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <p className="text-sm text-blue-600 font-semibold">Total Processed</p>
+                    <p className="text-3xl font-bold text-blue-700">{results.total}</p>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-green-600">Recovered ✅</p>
-                    <p className="text-2xl font-bold text-green-700">{results.recovered.length}</p>
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-sm text-green-600 font-semibold">Recovered ✅</p>
+                    <p className="text-3xl font-bold text-green-700">{results.recovered.length}</p>
                   </div>
-                  <div className="bg-red-50 p-4 rounded-lg">
-                    <p className="text-sm text-red-600">Failed ❌</p>
-                    <p className="text-2xl font-bold text-red-700">{results.failed.length}</p>
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <p className="text-sm text-red-600 font-semibold">Failed ❌</p>
+                    <p className="text-3xl font-bold text-red-700">{results.failed.length}</p>
                   </div>
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <p className="text-sm text-yellow-600">Pending ⏳</p>
-                    <p className="text-2xl font-bold text-yellow-700">{results.pending.length}</p>
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-600 font-semibold">Pending ⏳</p>
+                    <p className="text-3xl font-bold text-yellow-700">{results.pending.length}</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Errors ⚠️</p>
-                    <p className="text-2xl font-bold text-gray-700">{results.errors.length}</p>
+                  <div className="bg-gray-100 p-4 rounded-lg border border-gray-300">
+                    <p className="text-sm text-gray-600 font-semibold">Errors ⚠️</p>
+                    <p className="text-3xl font-bold text-gray-700">{results.errors.length}</p>
                   </div>
                 </div>
 
                 {/* Recovered Orders Table */}
                 {results.recovered.length > 0 && (
                   <div className="px-6 pb-6">
-                    <h4 className="font-medium text-gray-700 mb-3">Recovered Orders</h4>
-                    <div className="overflow-x-auto">
+                    <h4 className="font-bold text-gray-800 mb-3 text-lg">Recovered Orders</h4>
+                    <div className="overflow-x-auto border rounded-lg">
                       <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-green-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Number</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razorpay ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase tracking-wider">Order Number</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase tracking-wider">Amount</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase tracking-wider">Previous Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase tracking-wider">Razorpay ID</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {results.recovered.map((item, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.orderNumber}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{item.amount}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.previousStatus}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{item.razorpayPaymentId}</td>
+                            <tr key={index} className="hover:bg-green-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{item.orderNumber}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">₹{item.amount}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                  {item.previousStatus}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">{item.razorpayPaymentId}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -615,19 +820,19 @@ const PaymentRecovery: React.FC = () => {
                 {/* Errors Table */}
                 {results.errors.length > 0 && (
                   <div className="px-6 pb-6">
-                    <h4 className="font-medium text-gray-700 mb-3">Errors</h4>
-                    <div className="overflow-x-auto">
+                    <h4 className="font-bold text-gray-800 mb-3 text-lg">Errors</h4>
+                    <div className="overflow-x-auto border rounded-lg border-red-200">
                       <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-red-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Number</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Error</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider">Order Number</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-red-800 uppercase tracking-wider">Error</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {results.errors.map((item, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.orderNumber}</td>
+                            <tr key={index} className="hover:bg-red-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{item.orderNumber}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">{item.error}</td>
                             </tr>
                           ))}

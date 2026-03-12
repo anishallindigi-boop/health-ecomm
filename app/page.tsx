@@ -6,12 +6,12 @@ const API_KEY = process.env.NEXT_PUBLIC_API_KEY!;
 
 /* ✅ DEFAULT SEO (FALLBACK) */
 export const defaultSEO = {
-  title: "",
+  title: "Multani Pansari",
   description:
-    ".",
-  keywords: "Multani Pansari, home decor, furniture, interior design, lifestyle products, home accessories, modern decor, sustainable home goods",
+    "Multani Pansari provides high-quality Ayurvedic herbs, traditional medicines, natural spices, and herbal wellness products carefully selected for purity and effectiveness.",
+  keywords: "Multani Pansari",
   canonical: "https://www.multanipansari.com/",
-  ogImage: "https://www.multanipansari.com/og-image.jpg",
+  ogImage: "https://www.multanipansari.com/logo.png",
   twitterHandle: "",
   siteName: "Multani Pansari",
   locale: "en_US",

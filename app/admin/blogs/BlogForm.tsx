@@ -252,9 +252,9 @@ const handleCategoryCheckbox = (categoryId: string) => {
   <h3 className="font-semibold text-lg">Blog Categories</h3>
 
   <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-    {blogcategories.map((c: any) => (
+    {blogcategories.map((c: any,id:number) => (
       <label
-        key={c._id}
+        key={id}
         className="flex items-center gap-2 text-sm cursor-pointer"
       >
         <input

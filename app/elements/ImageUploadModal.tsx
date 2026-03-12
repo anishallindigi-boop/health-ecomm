@@ -21,6 +21,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 interface Props {
   open: boolean;
   onSelect: (urls: string[]) => void;
@@ -39,6 +42,8 @@ export default function ImageUploadModal({
     (state: RootState) => state.image
   );
 
+  console.log(images,"images")
+
   const [selected, setSelected] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -48,6 +53,9 @@ export default function ImageUploadModal({
     filename: string | null; 
     url: string | null 
   }>({ open: false, filename: null, url: null });
+
+
+
 
   /* Fetch images */
   useEffect(() => {

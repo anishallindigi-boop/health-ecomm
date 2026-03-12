@@ -1116,7 +1116,7 @@ export default function AdminOrdersPage() {
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Payment</TableHead>
-                  <TableHead>Shiprocket</TableHead>
+                  {/* <TableHead>Shiprocket</TableHead> */}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1148,12 +1148,8 @@ export default function AdminOrdersPage() {
                   orders?.map((order: any) => (
                     <TableRow key={order._id} className="hover:bg-gray-50/80 transition-colors">
                       <TableCell className="font-mono font-medium">
-                        <Link 
-                          href={`/admin/orders/${order._id}`}
-                          className=" hover:underline"
-                        >
-                          #{order.orderNumber || order._id?.slice(-6).toUpperCase()}
-                        </Link>
+                         {order.orderNumber || order._id?.slice(-6).toUpperCase()}
+                        
                       </TableCell>
                       <TableCell>
                         <div>
@@ -1192,9 +1188,9 @@ export default function AdminOrdersPage() {
                       <TableCell>
                       <StatusBadge status=   {order.paymentId?.status} /> 
                       </TableCell>
-                         <TableCell>
+                         {/* <TableCell>
                        <StatusBadge status= {order.shiprocketDetails.paymentMethod} />
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

@@ -150,7 +150,7 @@ const CategoryTablePage = () => {
                         onClick={() =>
                           router.push(`/admin/category/${cat._id}`)
                         }
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
                       >
                         <Edit className="w-4 h-4" />
                       </button>

@@ -57,7 +57,7 @@ export async function generateMetadata() {
       },
       icons: {
         icon: "/favicon.ico",
-        apple: "/apple-icon.png",
+        apple: "/logo.png",
       },
     };
   } catch (error) {
@@ -84,7 +84,7 @@ export async function generateMetadata() {
       },
       icons: {
         icon: "/favicon.ico",
-        apple: "/apple-icon.png",
+        apple: "/logo.png",
       },
     };
   }

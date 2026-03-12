@@ -117,7 +117,7 @@ export const getuser = createAsyncThunk<Auth, void, { rejectValue: string }>(
   async (_, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(`${API_URL}/api/auth/profile`);
-      console.log(res.data,"data")
+      // console.log(res.data,"data")
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || "Failed to load user");

@@ -172,9 +172,9 @@ const PaymentStatusBadge = ({ status }: { status: string }) => {
       label: "Pending"
     },
     initiated: {
-      color: "bg-blue-100 text-blue-800",
+      color: "bg-red-100 text-red-800",
       icon: CreditCard,
-      label: "Initiated"
+      label: "failed"
     },
     processing: {
       color: "bg-purple-100 text-purple-800",
@@ -1186,7 +1186,8 @@ export default function AdminOrdersPage() {
                         <StatusBadge status={order.status} />
                       </TableCell>
                       <TableCell>
-                      <StatusBadge status=   {order.paymentId?.status} /> 
+                        {/* {order.paymentId?.status} */}
+                      <PaymentStatusBadge status=   {order.paymentId?.status} /> 
                       </TableCell>
                          {/* <TableCell>
                        <StatusBadge status= {order.shiprocketDetails.paymentMethod} />
